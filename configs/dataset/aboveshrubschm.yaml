@@ -1,0 +1,48 @@
+_target_: pangaea.datasets.above_shrubs_chm.ABoVEShrubsCHM
+dataset_name: ABoVEShrubsCHM
+root_path: ./data/my_data_dir
+download_url: None
+auto_download: False
+img_size: 64
+#temp: 1
+multi_temporal: 1
+multi_modal: False
+ignore_index: -1
+num_classes: 1
+classes:
+  - regression
+distribution:
+  - 1.
+bands:
+  optical:
+    - B1
+    - B2
+    - B3
+    - B4
+data_mean:
+  optical:
+    - 0.485
+    - 0.456
+    - 0.404
+    - 0.404
+data_std:
+  optical:
+    - 0.229
+    - 0.224
+    - 0.225
+    - 0.404
+data_min:
+  optical:
+    - 0.
+    - 0.
+    - 0.
+    - 0.
+data_max:
+  optical:
+    - 1.
+    - 1.
+    - 1.
+    - 1.
+
+image_paths: /explore/nobackup/people/mmacande/srlite/chm_model/20231014_chm/train_merged_nodtm_npy/images
+mask_paths: /explore/nobackup/people/mmacande/srlite/chm_model/20231014_chm/train_merged_nodtm_npy/labels

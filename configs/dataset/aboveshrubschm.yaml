@@ -44,5 +44,4 @@ data_max:
     - 1.
     - 1.
 
-image_paths: /explore/nobackup/people/mmacande/srlite/chm_model/20231014_chm/train_merged_nodtm_npy/images
-mask_paths: /explore/nobackup/people/mmacande/srlite/chm_model/20231014_chm/train_merged_nodtm_npy/labels
+gpkg_filename: /explore/nobackup/projects/above/misc/ABoVE_Shrubs/footprints/footprints_chm_chips_lidar_include_train.gpkg

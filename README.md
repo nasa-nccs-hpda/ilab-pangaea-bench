@@ -365,6 +365,20 @@ Check the paper for all the insights!
 
 NOTE: if you want to benchmark the results of your model, for a fair comparison do not change the hparams in the configs! Soon we will publish also a set of "benchmark-configs", to support automatic running.
 
+## Working with ILAB Data
+
+### Download the Container
+
+```bash
+singularity build --sandbox /lscratch/jacaraba/container/ilab-pagaea-bench docker://nasanccs/ilab-pangaea-bench:latest
+```
+
+### ABoVE CHM Workflow
+
+```bash
+singularity exec --env PYTHONPATH=/explore/nobackup/people/jacaraba/development/ilab-pangaea-bench --nv -B $NOBACKUP,/explore/nobackup/people,/explore/nobackup/projects /lscratch/jacaraba/container/ilab-pagaea-bench  torchrun --nnodes=1 --nproc_per_node=1 /explore/nobackup/people/jacaraba/development/ilab-pangaea-bench/pangaea/run.py --config-name=train dataset=ABoVEShrubsCHM encoder=prithvi decoder=seg_upernet_mt_ltae preprocessing=reg_default criterion=cross_entropy task=regression
+```
+
 ## 📝 Citation
 
 If you find this work useful, please cite:

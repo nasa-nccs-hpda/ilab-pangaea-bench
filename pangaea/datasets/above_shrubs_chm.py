@@ -57,17 +57,9 @@ class ABoVEShrubsCHM(RawGeoFMDataset):
             self.gpkg_filename)
 
         # images and labels list
-        self.image_list = self.dataset_gdf..tolist()
-        self.mask_list = []
-
-        # get filename paths
-        #for image_path, mask_path in zip(self.image_paths, self.mask_paths):
-        #    self.image_list.extend(self.get_filenames(image_path))
-        #    self.mask_list.extend(self.get_filenames(mask_path))
-        for filename_path in self.dataset_gdf.filename.tolist():
-            if filename_path is not None and os.path.exists(filename_path):
-                self.image_list.append(filename_path)
-        print("BBBBBB", len(self.image_list))
+        self.image_list = self.dataset_gdf.filename.tolist()
+        self.mask_list = self.dataset_gdf.filename.str.replace(
+            "/labels/", "/images/", regex=False).tolist()
 
     def __len__(self):
         # Return the total number of samples

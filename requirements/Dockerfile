@@ -114,6 +114,7 @@ RUN pip --no-cache-dir install \
     netCDF4 \
     h5py \
     goes2go \
+    gdown \
     git+https://github.com/VMarsocci/pangaea-bench.git@main
     # git+https://github.com/nasa-nccs-hpda/satvision-toa.git@main
 

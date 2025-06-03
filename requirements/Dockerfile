@@ -115,6 +115,7 @@ RUN pip --no-cache-dir install \
     h5py \
     goes2go \
     gdown \
+    wandb \
     git+https://github.com/VMarsocci/pangaea-bench.git@main
     # git+https://github.com/nasa-nccs-hpda/satvision-toa.git@main
 

@@ -3,6 +3,29 @@
 This document provides a detailed overview of the datasets used in this repository. For each dataset, you will find instructions on how to prepare the data, along with command-line examples for running models. 
 
 *DISCLAIMER*: please consider that we provide the detailed overview for the datasets included in the original repo. Community-contributed datasets may not come with pre-defined command-line examples in this repository. Feel free to adapt the existing examples based on your use case. 
+## 📚 Table of Contents
+
+- [HLSBurnScars](#hlsburnscars)
+- [MADOS](#mados)
+- [PASTIS-R](#pastis-r)
+- [Sen1Floods11](#sen1floods11)
+- [xView2](#xview2)
+- [FiveBillionPixels](#fivebillionpixels)
+- [DynamicEarthNet](#dynamicearthnet)
+- [Crop Type Mapping (South Sudan)](#crop-type-mapping-south-sudan)
+- [SpaceNet 7](#spacenet-7)
+- [AI4SmallFarms](#ai4smallfarms)
+- [BioMassters](#biomassters)
+
+### 🧪 Community-Contributed Datasets
+- [Potsdam](#potsdam)
+- [Open-Canopy](#open-canopy)
+- [Geo-Bench Datasets](#geo-bench-datasets)
+  - [Multi-label Classification (e.g., m-BigEarthNet)](#for-multi-label-classification-eg-m-bigearthnet)
+  - [Single-label Classification (e.g., m-EuroSat, m-Brick-Kiln)](#for-single-label-classification-ie-m-eurosat-m-brick-kiln-m-forestnet-m-pv4ger-m-so2sat)
+  - [Semantic Segmentation (e.g., m-NZ-Cattle, m-SA-Crop-Type)](#for-semantic-segmentation-ie-m-cashew-plantation-m-chesapeake-landcover-m-neontree-m-nz-cattle-m-pv4ger-seg-and-m-sa-crop-type)
+
+---
 
 ### HLSBurnScars
 
@@ -222,6 +245,7 @@ This document provides a detailed overview of the datasets used in this reposito
    ```
   In this case, you can specify in the `temp` parameter which frame you want to use.
 
+---
 **Note**: The following datasets are **community-contributed** and are not part of the original benchmark repository. 
 ### Potsdam
    ```
@@ -234,3 +258,96 @@ This document provides a detailed overview of the datasets used in this reposito
    criterion=cross_entropy \
    task=segmentation
   ```
+### Open-Canopy
+   ```
+    torchrun --nnodes=1 --nproc_per_node=1 pangaea/run.py \
+    --config-name=train \
+    dataset=opencanopy \
+    encoder=dofa \
+    decoder=reg_upernet \
+    preprocessing=reg_default \
+    criterion=mse \
+    task=regression
+  ```
+### Geo-Bench Datasets 
+Note that `export GEO_BENCH_DIR=YOUR/PATH/DIR` is required.
+-  For multi-label linear classification, e.g., m-BigEarthNet
+    ```
+    export GEO_BENCH_DIR=YOUR/PATH/DIR
+    torchrun --nnodes=1 --nproc_per_node=1 pangaea/run.py  \
+      --config-name=train \
+      dataset=mbigearthnet \
+      encoder=dofa  \
+      decoder=cls_linear  \
+      preprocessing=cls_resize \
+      criterion=binary_cross_entropy \
+      task=linear_classification_multi_label \
+      finetune=false
+    ```
+
+-  For single-label linear classification, i.e., m-EuroSat, m-Brick-Kiln, m-ForestNet, m-PV4Ger, m-So2Sat
+    ```
+      export GEO_BENCH_DIR=YOUR/PATH/DIR
+      torchrun --nnodes=1 --nproc_per_node=1 pangaea/run.py  \
+        --config-name=train \
+        dataset=meurosat \
+        encoder=remoteclip  \
+        decoder=cls_linear  \
+        preprocessing=cls_resize \
+        criterion=cross_entropy \
+        task=linear_classification \
+        finetune=false
+      ```
+
+-  For semantic segmentation, i.e., m-Cashew-Plantation, m-Chesapeake-Landcover, m-NeonTree, m-NZ-Cattle, m-PV4Ger-Seg and m-SA-Crop-Type
+    ```
+      export GEO_BENCH_DIR=YOUR/PATH/DIR
+      torchrun --nnodes=1 --nproc_per_node=1 pangaea/run.py  \
+        --config-name=train \
+        dataset=mnz-cattle \
+        encoder=dofa  \
+        decoder=seg_upernet  \
+        preprocessing=seg_default \
+        criterion=cross_entropy \
+        task=segmentation \
+        finetune=false
+      ```
+
+-  For KNN probe classification, i.e., m-EuroSat, m-Brick-Kiln, m-ForestNet, m-PV4Ger, m-So2Sat
+    ```
+      export GEO_BENCH_DIR=YOUR/PATH/DIR
+      torchrun --nnodes=1 --nproc_per_node=1 pangaea/run.py  \
+        --config-name=train \
+        dataset=meurosat \
+        encoder=remoteclip  \
+        decoder=cls_knn  \
+        preprocessing=cls_resize \
+        criterion=none \
+        task=knn_probe \
+        batch_size=32 \
+        finetune=false
+      ```
+    Note that for KNN probe:
+    - The criterion is set to `none` since no training is performed
+    - The batch size can be larger since we're only doing inference
+    - `finetune` is set to `false` as we're only using the pre-trained encoder
+
+-  For multi-label KNN probe classification, i.e., m-BigEarthNet
+    ```
+      export GEO_BENCH_DIR=YOUR/PATH/DIR
+      torchrun --nnodes=1 --nproc_per_node=1 pangaea/run.py  \
+        --config-name=train \
+        dataset=mbigearthnet \
+        encoder=remoteclip  \
+        decoder=cls_knn_multilabel  \
+        preprocessing=cls_resize \
+        criterion=none \
+        task=knn_probe_multi_label \
+        batch_size=32 \
+        finetune=false
+      ```
+    Note that for multi-label KNN probe:
+    - The criterion is set to `none` since no training is performed
+    - The batch size can be larger since we're only doing inference
+    - `finetune` is set to `false` as we're only using the pre-trained encoder
+    - The task is set to `knn_probe_multi_label` to handle multiple labels per sample

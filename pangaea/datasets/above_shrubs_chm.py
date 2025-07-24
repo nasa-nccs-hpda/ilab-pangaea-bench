@@ -5,6 +5,7 @@ import numpy as np
 import geopandas as gpd
 import rioxarray as rxr
 from pathlib import Path
+import torch.nn.functional as F
 from pangaea.datasets.base import RawGeoFMDataset
 
 
@@ -48,7 +49,6 @@ class ABoVEShrubsCHM(RawGeoFMDataset):
             data_max=data_max,
             download_url=download_url,
             auto_download=auto_download,
-            gpkg_filename=gpkg_filename
         )
 
         # dataset parameters for filenames
@@ -57,8 +57,8 @@ class ABoVEShrubsCHM(RawGeoFMDataset):
             self.gpkg_filename)
 
         # images and labels list
-        self.image_list = self.dataset_gdf.filename.tolist()
-        self.mask_list = self.dataset_gdf.filename.str.replace(
+        self.mask_list = self.dataset_gdf.filename.tolist()
+        self.image_list = self.dataset_gdf.filename.str.replace(
             "/labels/", "/images/", regex=False).tolist()
 
     def __len__(self):
@@ -90,8 +90,33 @@ class ABoVEShrubsCHM(RawGeoFMDataset):
         target = self._load_file(self.mask_list[index])  # Load target label or mask
 
         # Convert to tensors
-        image = torch.tensor(image, dtype=torch.float32).unsqueeze(1)
+        image = torch.tensor(image, dtype=torch.float32)#.unsqueeze(1)
         target = torch.tensor(target, dtype=torch.float32).squeeze()
+
+
+        # Add batch dimension for interpolation (NCHW)
+        image = image.unsqueeze(1)  # shape: (1, 3, 64, 64)
+
+        # Resize image to 224×224 (expected by PRITHVI)
+        image = F.interpolate(image, size=(224, 224), mode='bilinear', align_corners=False)
+        #image = image.squeeze(0)  # back to (3, 224, 224)
+
+        # Resize target if needed (optional, depends on task)
+        target = F.interpolate(target.unsqueeze(0).unsqueeze(0), size=(224, 224), mode='bilinear', align_corners=False).squeeze()
+
+        #print(image.shape, target.shape)
+        #image = image.unsqueeze(1)
+
+        # Expand temporal dimension: (C, H, W) → (C, 1, H, W)
+        #image = image.unsqueeze(0)
+
+        # Resize spatial: (C, 1, H, W) → (C, 1, 224, 224)
+        #image = F.interpolate(image, size=(1, 224, 224), mode='bilinear', align_corners=False)
+
+        # Reorder to (C, T, H, W) → (T, C, H, W)
+        #image = image.permute(1, 0, 2, 3)
+
+        #print(image.shape, target.shape)
 
         return {
             'image': {'optical': image},

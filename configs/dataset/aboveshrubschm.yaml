@@ -3,9 +3,9 @@ dataset_name: ABoVEShrubsCHM
 root_path: ./data/my_data_dir
 download_url: None
 auto_download: False
-img_size: 64
+img_size: 224
 #temp: 1
-multi_temporal: 1
+multi_temporal: False
 multi_modal: False
 ignore_index: -1
 num_classes: 1

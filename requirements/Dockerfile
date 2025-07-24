@@ -1,5 +1,5 @@
 # Arguments to pass to the image
-ARG VERSION_DATE=25.04
+ARG VERSION_DATE=24.01
 ARG FROM_IMAGE=nvcr.io/nvidia/pytorch
 
 # Import RAPIDS container as the BASE Image (cuda base image)
@@ -118,7 +118,6 @@ RUN pip --no-cache-dir install \
     wandb \
     terratorch \
     git+https://github.com/VMarsocci/pangaea-bench.git@main
-    # git+https://github.com/nasa-nccs-hpda/satvision-toa.git@main
 
 HEALTHCHECK NONE
 ENTRYPOINT []

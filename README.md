@@ -432,16 +432,20 @@ NOTE: if you want to benchmark the results of your model, for a fair comparison 
 
 ## Working with ILAB Data
 
+We use PANGAEA-Bench as our primary platform to benchmark geospatial foundation models on ILAB datasets, leveraging its standardized evaluation protocols and diverse task support. This allows us to systematically test and compare model performance across a range of geospatial domains and sensor types. In addition, we integrate TerraTorch to extend this workflow with flexible fine-tuning options, enabling rapid adaptation of foundation models to specialized downstream tasks. Users can follow the PANGAEA documentation to reproduce experiments, customize configurations, and integrate their own datasets for benchmarking and fine-tuning.
+
+Within the ILAB pipelines, PANGAEA-Bench serves as a central evaluation framework for foundation model experimentation, seamlessly connecting with our containerized workflows and HPC environments. This integration enables developers to rapidly prototype, benchmark, and fine-tune models on mission-specific datasets while maintaining reproducibility and scalability across ILAB’s compute infrastructure. By leveraging both PANGAEA-Bench and TerraTorch, our team can standardize benchmarking practices while retaining the flexibility needed for model customization and operational deployment.
+
 ### Download the Container
 
 ```bash
 singularity build --sandbox /lscratch/jacaraba/container/ilab-pagaea-bench docker://nasanccs/ilab-pangaea-bench:latest
 ```
 
-### ABoVE CHM Workflow
+### ABoVE CHM Workflow Example
 
 ```bash
-singularity exec --env PYTHONPATH=/explore/nobackup/people/jacaraba/development/ilab-pangaea-bench --nv -B $NOBACKUP,/explore/nobackup/people,/explore/nobackup/projects /lscratch/jacaraba/container/ilab-pagaea-bench  torchrun --nnodes=1 --nproc_per_node=1 /explore/nobackup/people/jacaraba/development/ilab-pangaea-bench/pangaea/run.py --config-name=train dataset=ABoVEShrubsCHM encoder=prithvi decoder=seg_upernet_mt_ltae preprocessing=reg_default criterion=cross_entropy task=regression
+singularity exec --env PYTHONPATH=/explore/nobackup/people/jacaraba/development/ilab-pangaea-bench --nv -B $NOBACKUP,/explore/nobackup/people,/explore/nobackup/projects /lscratch/jacaraba/container/ilab-pagaea-bench  torchrun --nnodes=1 --nproc_per_node=1 /explore/nobackup/people/jacaraba/development/ilab-pangaea-bench/pangaea/run.py --config-name=train dataset=aboveshrubschm encoder=prithvi decoder=seg_upernet_mt_ltae preprocessing=reg_default criterion=cross_entropy task=regression
 ```
 
 ## 📝 Citation

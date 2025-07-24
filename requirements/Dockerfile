@@ -116,6 +116,7 @@ RUN pip --no-cache-dir install \
     goes2go \
     gdown \
     wandb \
+    terratorch \
     git+https://github.com/VMarsocci/pangaea-bench.git@main
     # git+https://github.com/nasa-nccs-hpda/satvision-toa.git@main
 

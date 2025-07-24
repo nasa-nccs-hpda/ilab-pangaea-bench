@@ -116,8 +116,8 @@ RUN pip --no-cache-dir install \
     goes2go \
     gdown \
     wandb \
-    terratorch \
     git+https://github.com/VMarsocci/pangaea-bench.git@main
+    #terratorch \
 
 HEALTHCHECK NONE
 ENTRYPOINT []

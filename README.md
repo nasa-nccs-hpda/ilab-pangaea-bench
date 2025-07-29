@@ -442,6 +442,12 @@ Within the ILAB pipelines, PANGAEA-Bench serves as a central evaluation framewor
 singularity build --sandbox /lscratch/jacaraba/container/ilab-pagaea-bench docker://nasanccs/ilab-pangaea-bench:latest
 ```
 
+A container for shared usage in Explore has been located here:
+
+```bash
+/explore/nobackup/projects/ilab/containers/ilab-pagaea-bench.2025-07-28
+```
+
 ### ABoVE CHM Workflow Example
 
 ```bash

@@ -954,3 +954,32 @@ def _setup_size(size, error_msg):
 
     return size
 
+
+class PBMinMaxNorm(BasePreprocessor):
+    """Per-band minmax norm that maintains HWC format."""
+    def __init__(self, **meta) -> None:
+        super().__init__()
+
+    def __call__(self, image: np.ndarray):
+        """Transforms input image, maintaining numpy array format. 
+        Expects C,T,H,W format, returns C,T,H,W format."""    
+        normalized_channels = []
+
+        for c in range(image.shape[0]):
+            channel = image[c, :, :, :]
+            channel_min = np.min(channel)
+            channel_max = np.max(channel)
+
+            if channel_max > channel_min:
+                norm_channel = (channel - channel_min) / (channel_max - channel_min)
+            else:
+                norm_channel = channel * 0.0
+
+            normalized_channels.append(norm_channel)
+
+        # Stack channels back together, maintaining CHW format
+        norm = np.stack(normalized_channels, axis=0)
+        return torch.from_numpy(norm).float()
+    
+    def update_meta(self, meta):
+        pass

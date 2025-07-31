@@ -454,6 +454,35 @@ A container for shared usage in Explore has been located here:
 singularity exec --env PYTHONPATH=/explore/nobackup/people/jacaraba/development/ilab-pangaea-bench --nv -B $NOBACKUP,/explore/nobackup/people,/explore/nobackup/projects /lscratch/jacaraba/container/ilab-pagaea-bench  torchrun --nnodes=1 --nproc_per_node=1 /explore/nobackup/people/jacaraba/development/ilab-pangaea-bench/pangaea/run.py --config-name=train dataset=aboveshrubschm encoder=prithvi decoder=seg_upernet_mt_ltae preprocessing=reg_default criterion=cross_entropy task=regression
 ```
 
+### Custom ILAB Dataset Creation
+
+1) Setup of dataset:
+   * Extend RawGeoFMDataset class, add the extra args needed 
+      * See RawGeoFMDataset in the base dataset class
+	* If preprocessing is needed, add the transform to the `engine > data_preprocessor.py` file
+      * Must extend BasePreprocessor or something that inherits from it
+      * Also must add a config to preprocessing folder with appropriate arguments
+   * Additional preprocessing considerations:
+      * BasePreprocessor expects inputs to be torch tensors with `C, T, H, W` dims
+      * BasePreprocessor expects targets to be torch tensors with `H, W` (or less) dims
+         * Depends on the task, see BasePreprocessor class in `engine > data_preprocessor.py`
+      * BasePreprocessor requires a certain dictionary form 
+         * See `__getitem__()` of one dataset for an example
+      * Encoder/decoder may expect images of a certain size
+2) Dataset config:
+	* Copy the config from another dataset
+   * Adjust the `_target_`, `dataset_name`, and `root_path` variables to point to your dataset and data folders
+   * If dataset needs to be downloaded, download_url should also be specified
+   * Adjust other fields based on specific dataset specs (`img_size`, `multi_temporal`, `multi_modal`, etc)
+   * Other fields can be added at the bottom of the yaml file that are specific to your dataset
+      * For example, my dataset can have a variable number of inputs for fine-tuning, so I have a `num_inputs` line
+3) Other considerations:
+   * When cloning the repo and running with the container, make sure to be in the directory above the cloned repo. This will allow the PYTHONPATH to be correctly configured. 
+   * Singularity will try to output files to your home directory by default. Pass a different directory with the `--pwd` flag to change this behavior.
+   * If running commands on ADAPT, make sure to ssh into gpulogin1, then allocate resources using slurm
+     * Example salloc command: `salloc -G1 -t 06:00:00 -n1 -c10 -J <session_name>`
+
+
 ## 📝 Citation
 
 If you find this work useful, please cite:

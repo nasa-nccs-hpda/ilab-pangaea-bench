@@ -121,6 +121,8 @@ RUN pip --no-cache-dir install \
     git+https://github.com/VMarsocci/pangaea-bench.git@main
     #terratorch \
 
+RUN pip install "numpy<2"
+
 HEALTHCHECK NONE
 ENTRYPOINT []
 CMD ["/bin/bash"]

@@ -1,6 +1,6 @@
 _target_: pangaea.datasets.landsat_nlcd.Landsat_NLCD
 dataset_name: Landsat_NLCD
-root_path: /explore/nobackup/people/mfrost2/lscratch/EO_FM/data/Landsat_NLCDv4/train
+root_path: /explore/nobackup/people/mfrost2/lscratch/EO_FM/data/Landsat_NLCD_sm
 download_url: None
 auto_download: False
 img_size: 224  # This matches your data now

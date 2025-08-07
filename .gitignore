@@ -3,6 +3,8 @@
 *_aboveshrubschm/
 *_biomassters/
 
+*.ipynb_checkpoints/*
+
 aaa_mystuff/
 work-dir/
 outputs/

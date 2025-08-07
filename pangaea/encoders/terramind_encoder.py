@@ -2487,7 +2487,8 @@ class TerraMindViT(Encoder):
         if "sar" in image:
             d["S1GRD"] = image["sar"].squeeze(2)
         if "optical" in image:
-            d["S2L2A"] = image["optical"].squeeze(2)
+            # d["S2L2A"] = image["optical"].squeeze(2)
+            d["S2L1C"] = image["optical"].squeeze(2)
 
         if self.training and self.modality_drop_rate:
             # Drop random modalities during training
@@ -2731,7 +2732,7 @@ def build_terrammind_vit(
 
     if encoder_weights is not None:
         # Load model from checkpoint
-        state_dict = torch.load(encoder_weights, map_location="cpu", weights_only=True)
+        state_dict = torch.load(encoder_weights, map_location="cpu", weights_only=False)
         loaded_keys = model.load_state_dict(state_dict, strict=False)
         if loaded_keys.missing_keys:
             logger.warning(f"Missing keys in encoder_weights {encoder_weights}: {loaded_keys.missing_keys}")

@@ -1,0 +1,14 @@
+train:
+    _target_: pangaea.engine.data_preprocessor.Preprocessor
+    preprocessor_cfg:
+        - _target_: pangaea.engine.data_preprocessor.PBMinMaxNorm
+
+val:
+    _target_: pangaea.engine.data_preprocessor.Preprocessor
+    preprocessor_cfg:
+        - _target_: pangaea.engine.data_preprocessor.PBMinMaxNorm
+
+test:
+    _target_: pangaea.engine.data_preprocessor.Preprocessor
+    preprocessor_cfg:
+        - _target_: pangaea.engine.data_preprocessor.PBMinMaxNorm

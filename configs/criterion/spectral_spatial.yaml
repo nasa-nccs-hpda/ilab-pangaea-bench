@@ -1,0 +1,5 @@
+_target_: pangaea.utils.losses.SpectralSpatialLoss
+ignore_index: ${dataset.ignore_index}
+edge_weight: 0.5
+schedule_type: linear
+

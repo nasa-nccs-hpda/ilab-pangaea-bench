@@ -78,6 +78,7 @@ RUN git clone --single-branch --branch master https://github.com/pkolano/shift.g
 # Pip
 RUN pip install --no-cache-dir --ignore-installed blinker terratorch
 RUN pip --no-cache-dir install \
+    'numpy<2' \
     pytorch-lightning \
     Lightning \
     transformers \
@@ -119,6 +120,8 @@ RUN pip --no-cache-dir install \
     wandb \
     git+https://github.com/VMarsocci/pangaea-bench.git@main
     #terratorch \
+
+RUN pip install "numpy<2"
 
 HEALTHCHECK NONE
 ENTRYPOINT []

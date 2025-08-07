@@ -1,0 +1,100 @@
+_target_: pangaea.datasets.landsat_nlcd.Landsat_NLCD
+dataset_name: Landsat_NLCD
+root_path: /explore/nobackup/people/mfrost2/lscratch/EO_FM/data/Landsat_NLCDv4/train
+download_url: None
+auto_download: False
+img_size: 224  # This matches your data now
+multi_temporal: False
+multi_modal: False
+ignore_index: -1
+num_classes: 16  # This is correct
+
+classes:
+     # ['Open Water', 
+    # 'Perennial Ice/Snow',
+    # 'Developed, Open Space',
+    # 'Developed, Low Intensity',
+    # 'Developed, Medium Intensity',
+    # 'Developed, High Intensity',
+    # 'Barren Land (Rock/Sand/Clay)',
+    # 'Deciduous Forest',
+    # 'Evergreen Forest',
+    # 'Mixed Forest',
+    # 'Dwarf Scrub',
+    # 'Shrub/Scrub',
+    # 'Grassland/Herbaceous', 
+    # 'Sedge/Herbaceous', 
+    # 'Lichens',
+    # 'Moss', 
+    # 'Pasture/Hay',
+    # 'Cultivated Crops',
+    # 'Woody Wetlands',
+    # 'Emergent Herbaceous Wetlands',
+    [ '0 - 11.0 Open Water', 
+      '1 - 21.0 Developed, Open Space',
+      '2 - 22.0 Developed, Low Intensity',
+      '3 - 23.0 Developed, Medium Intensity', 
+      '4 - 24.0 Developed, High Intensity',
+      '5 - 31.0 Barren Land (Rock/Sand/Clay)',
+      '6 - 41.0 Deciduous Forest',
+      '7 - 42.0 Evergreen Forest',
+      '8 - 43.0 Mixed Forest',
+      '9 - 52.0 Shrub/Scrub',
+      '10 - 71.0 Grassland/Herbaceous',
+      '11 - 81.0 Pasture/Hay',
+      '12 - 82.0 Cultivated Crops',
+      '13 - 90.0 Woody Wetlands',
+      '14 - 95.0 Emergent Herbaceous Wetlands',
+      '15 - 250.0 NA']
+  
+distribution:
+  - 1.
+bands:
+  optical:
+  - B1
+  - B2
+  - B3
+  - B4
+  - B5
+  - B6
+  - B7
+data_mean:
+  optical:
+  - 7051
+  - 7158
+  - 7945
+  - 7459
+  - 18320
+  - 12037
+  - 8883
+data_std:
+  optical:
+  - 2825
+  - 2879
+  - 3233
+  - 3094
+  - 7538
+  - 5040
+  - 3773
+data_min:
+  optical:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+data_max:
+  optical:
+  - 24802
+  - 26519
+  - 29409
+  - 31624
+  - 36468
+  - 33144
+  - 22000
+
+
+
+

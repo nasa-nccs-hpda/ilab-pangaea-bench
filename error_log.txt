@@ -1,0 +1,89 @@
+WARNING: underlay of /etc/localtime required more than 50 (117) bind mounts
+WARNING: underlay of /usr/bin/nvidia-smi required more than 50 (616) bind mounts
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.2.6 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/explore/nobackup/people/mfrost2/lscratch/EO_FM/ilab-pangaea-bench/pangaea/run.py", line 17, in <module>
+    from pangaea.decoders.base import Decoder
+  File "/explore/nobackup/people/mfrost2/lscratch/EO_FM/ilab-pangaea-bench/pangaea/decoders/base.py", line 3, in <module>
+    from pangaea.encoders.base import Encoder
+  File "/explore/nobackup/people/mfrost2/lscratch/EO_FM/ilab-pangaea-bench/pangaea/encoders/__init__.py", line 1, in <module>
+    from . import terramind_encoder
+  File "/explore/nobackup/people/mfrost2/lscratch/EO_FM/ilab-pangaea-bench/pangaea/encoders/terramind_encoder.py", line 11, in <module>
+    import albumentations as A
+  File "/usr/local/lib/python3.10/dist-packages/albumentations/__init__.py", line 3, in <module>
+    from .augmentations import *
+  File "/usr/local/lib/python3.10/dist-packages/albumentations/augmentations/__init__.py", line 1, in <module>
+    from .blur.functional import *
+  File "/usr/local/lib/python3.10/dist-packages/albumentations/augmentations/blur/__init__.py", line 1, in <module>
+    from .functional import *
+  File "/usr/local/lib/python3.10/dist-packages/albumentations/augmentations/blur/functional.py", line 5, in <module>
+    import cv2
+  File "/usr/local/lib/python3.10/dist-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/usr/local/lib/python3.10/dist-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+AttributeError: _ARRAY_API not found
+Traceback (most recent call last):
+  File "/explore/nobackup/people/mfrost2/lscratch/EO_FM/ilab-pangaea-bench/pangaea/run.py", line 17, in <module>
+    from pangaea.decoders.base import Decoder
+  File "/explore/nobackup/people/mfrost2/lscratch/EO_FM/ilab-pangaea-bench/pangaea/decoders/base.py", line 3, in <module>
+    from pangaea.encoders.base import Encoder
+  File "/explore/nobackup/people/mfrost2/lscratch/EO_FM/ilab-pangaea-bench/pangaea/encoders/__init__.py", line 1, in <module>
+    from . import terramind_encoder
+  File "/explore/nobackup/people/mfrost2/lscratch/EO_FM/ilab-pangaea-bench/pangaea/encoders/terramind_encoder.py", line 11, in <module>
+    import albumentations as A
+  File "/usr/local/lib/python3.10/dist-packages/albumentations/__init__.py", line 3, in <module>
+    from .augmentations import *
+  File "/usr/local/lib/python3.10/dist-packages/albumentations/augmentations/__init__.py", line 1, in <module>
+    from .blur.functional import *
+  File "/usr/local/lib/python3.10/dist-packages/albumentations/augmentations/blur/__init__.py", line 1, in <module>
+    from .functional import *
+  File "/usr/local/lib/python3.10/dist-packages/albumentations/augmentations/blur/functional.py", line 5, in <module>
+    import cv2
+  File "/usr/local/lib/python3.10/dist-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/usr/local/lib/python3.10/dist-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: numpy.core.multiarray failed to import
+E0804 12:45:29.424000 1958876 torch/distributed/elastic/multiprocessing/api.py:874] failed (exitcode: 1) local_rank: 0 (pid: 1958930) of binary: /usr/bin/python
+Traceback (most recent call last):
+  File "/usr/local/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+  File "/usr/local/lib/python3.10/dist-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+  File "/usr/local/lib/python3.10/dist-packages/torch/distributed/run.py", line 892, in main
+    run(args)
+  File "/usr/local/lib/python3.10/dist-packages/torch/distributed/run.py", line 883, in run
+    elastic_launch(
+  File "/usr/local/lib/python3.10/dist-packages/torch/distributed/launcher/api.py", line 139, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/usr/local/lib/python3.10/dist-packages/torch/distributed/launcher/api.py", line 270, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/explore/nobackup/people/mfrost2/lscratch/EO_FM/ilab-pangaea-bench/pangaea/run.py FAILED
+------------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2025-08-04_12:45:29
+  host      : gpu002.atstor.adapt.nccs.nasa.gov
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 1958930)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

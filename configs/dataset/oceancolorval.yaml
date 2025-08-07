@@ -1,7 +1,6 @@
 _target_: pangaea.datasets.ocean_color.OceanColorDataset
 dataset_name: OceanColorDataset
-# root_path: /explore/nobackup/people/ajkerr1/SatVision/OceanColor/chips/unique_chips/2020172_1155
-root_path: /explore/nobackup/people/ajkerr1/SatVision/OceanColor/chips/prithvi_chips/train
+root_path: /explore/nobackup/people/ajkerr1/SatVision/OceanColor/chips/prithvi_chips/val
 download_url: None
 auto_download: False
 img_size: 224
@@ -14,7 +13,7 @@ classes:
 distribution:
   - 1.
 bands:
-  optical: [B8, B9, B10, B11, B12, B13] # verify
+  optical: [BLUE, GREEN, RED, NIR_NARROW, SWIR_1, SWIR_2]
 data_mean:
   optical: [0.485, 0.456, 0.404, 0.404, 0.404, 0.404] # change
 data_std:

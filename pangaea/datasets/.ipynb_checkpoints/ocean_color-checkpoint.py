@@ -6,63 +6,30 @@ from glob import glob
 from pathlib import Path
 from osgeo import gdal
 import torchvision.transforms as T
-import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
 
 from pangaea.datasets.base import RawGeoFMDataset
-from pangaea.engine.data_preprocessor import PBMinMaxNorm
 
-class OceanColorDataset(RawGeoFMDataset):
+
+class OceanColorDataset(Dataset):
     """
     Dataset of MOD021KM Aqua Data. For now this uses .npy chip files.
     """
 
     def __init__(
         self,
-        num_inputs: int,
-        num_targets: int,
-        # inherited from RawGeoFMDataset
-        split: str,
-        dataset_name: str,
-        multi_modal: bool,
-        multi_temporal: int,
-        root_path: str,
-        classes: list,
-        num_classes: int,
-        ignore_index: int,
-        img_size: int,
-        bands: dict[str, list[str]],
-        distribution: list[int],
-        data_mean: dict[str, list[str]],
-        data_std: dict[str, list[str]],
-        data_min: dict[str, list[str]],
-        data_max: dict[str, list[str]],
-        download_url: str,
-        auto_download: bool,
+        data_path,
+        split="train",
+        val_split=0.2,
+        random_split=42,
+        config=None,
+        transform=None,
+        num_inputs=12,
+        num_targets=1
     ):
-        super(OceanColorDataset, self).__init__(
-            split=split,
-            dataset_name=dataset_name,
-            multi_modal=multi_modal,
-            multi_temporal=multi_temporal,
-            root_path=root_path,
-            classes=classes,
-            num_classes=num_classes,
-            ignore_index=ignore_index,
-            img_size=img_size,
-            bands=bands,
-            distribution=distribution,
-            data_mean=data_mean,
-            data_std=data_std,
-            data_min=data_min,
-            data_max=data_max,
-            download_url=download_url,
-            auto_download=auto_download,
-        )
-
-        self.samples = self.gather_files(root_path)
-        self.img_size = img_size
-        self.transform = PBMinMaxNorm()
+        self.samples = self.gather_files(data_path)
+        self.config = config
+        self.transform = transform
         self.num_inputs = num_inputs
         self.num_targets = num_targets
 
@@ -73,44 +40,20 @@ class OceanColorDataset(RawGeoFMDataset):
         """Returns the next item in the dataset. Load sample from file,
         apply transforms to the entire sample, then extract inputs and targets.
         """
-        # load and resize sample image
-        image = self.resize_img(self.samples[index])
+        sample = self.samples[index].astype(np.float32)  # NumPy array
 
         # apply transform
-        transformed = self.transform(image)
+        if self.transform is not None:
+            sample = np.transpose(sample, (1, 2, 0))
+            sample = self.transform(image=sample)["image"]
 
         # extract inputs and target(s)
-        inputs = transformed[:self.num_inputs]  # Add T dim
-        target = transformed[
+        inputs = sample[:self.num_inputs]
+        target = sample[
             self.num_inputs:self.num_inputs + self.num_targets]
-        target = target.squeeze()
-
-        outputs = {
-            "image" : {
-                "optical": inputs,
-            }, 
-            "target": target,
-            "metadata": {},
-        }
-
-        return outputs
-    
-    def resize_img(self, image: np.ndarray) -> np.ndarray:
-        """Prithvi requires a specific image size, so we reshape before transforming."""
-        image = np.expand_dims(image, axis=0)  # Add batch dim for resize
-        resized = F.interpolate(
-            torch.from_numpy(image), 
-            size=(self.img_size, self.img_size), 
-            mode='bilinear', 
-            align_corners=False
-        )
-        # shape needs to to be (C, T, H, W)
-        resized = resized.permute(1, 0, 2, 3)
-        return resized.numpy()
-
-    @staticmethod
-    def download(self, silent=False):
-        pass
+        
+        return inputs, target
+        
     
     def gather_files(self, data_path: str) -> list[str]:
         """

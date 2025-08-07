@@ -21,6 +21,7 @@ class OceanColorDataset(RawGeoFMDataset):
         self,
         num_inputs: int,
         num_targets: int,
+        target_idx: int,
         # inherited from RawGeoFMDataset
         split: str,
         dataset_name: str,
@@ -62,9 +63,9 @@ class OceanColorDataset(RawGeoFMDataset):
 
         self.samples = self.gather_files(root_path)
         self.img_size = img_size
-        self.transform = PBMinMaxNorm()
         self.num_inputs = num_inputs
         self.num_targets = num_targets
+        self.target_idx = target_idx 
 
     def __len__(self) -> int:
         return len(self.samples)
@@ -76,14 +77,12 @@ class OceanColorDataset(RawGeoFMDataset):
         # load and resize sample image
         image = self.resize_img(self.samples[index])
 
-        # apply transform
-        transformed = self.transform(image)
-
-        # extract inputs and target(s)
-        inputs = transformed[:self.num_inputs]  # Add T dim
-        target = transformed[
-            self.num_inputs:self.num_inputs + self.num_targets]
-        target = target.squeeze()
+        # trying to avoid using stripey swir_2 band (last input idx)
+        # inputs = image[:self.num_inputs-1]
+        # inputs = np.concatenate((inputs, image[self.num_inputs-2:self.num_inputs-1]), axis=0)
+        inputs = image[:self.num_inputs]
+        target = image[self.target_idx:self.target_idx + self.num_targets]
+        target = np.squeeze(target)
 
         outputs = {
             "image" : {

@@ -1021,26 +1021,39 @@ class PBMinMaxNorm(BasePreprocessor):
     def __init__(self, **meta) -> None:
         super().__init__()
 
-    def __call__(self, image: np.ndarray):
+    def normalize(self, image: np.ndarray):
         """Transforms input image, maintaining numpy array format. 
-        Expects C,T,H,W format, returns C,T,H,W format."""    
-        normalized_channels = []
+        Expects C,T,H,W format, returns C,T,H,W format."""
+        if image.ndim == 4: # input
+            for c in range(image.shape[0]):
+                channel = image[c, :, :, :]
+                channel_min = np.min(channel)
+                channel_max = np.max(channel)
 
-        for c in range(image.shape[0]):
-            channel = image[c, :, :, :]
-            channel_min = np.min(channel)
-            channel_max = np.max(channel)
+                if channel_max > channel_min:
+                    image[c, :, :, :] = (channel - channel_min) / (channel_max - channel_min)
+                else:
+                    image[c, :, :, :] = channel * 0.0
+        elif image.ndim == 2: # target
+            channel_min = np.min(image)
+            channel_max = np.max(image)
 
             if channel_max > channel_min:
-                norm_channel = (channel - channel_min) / (channel_max - channel_min)
+                image = (image - channel_min) / (channel_max - channel_min)
             else:
-                norm_channel = channel * 0.0
+                image = image * 0.0
 
-            normalized_channels.append(norm_channel)
+        return torch.from_numpy(image).float()
 
-        # Stack channels back together, maintaining CHW format
-        norm = np.stack(normalized_channels, axis=0)
-        return torch.from_numpy(norm).float()
+    def __call__(self, outputs: dict):
+        """Wrapper around the normalization function.
+        Unpacks the outputs dict, normalizes, and repacks them.""" 
+        
+        outputs['image']['optical'] = self.normalize(
+            outputs['image']['optical'])   
+        outputs['target'] = self.normalize(outputs['target'])
+        
+        return outputs
     
     def update_meta(self, meta):
         pass

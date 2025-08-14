@@ -13,8 +13,8 @@ classes:
 distribution:
   - 1.
 bands:
-  optical: [B1, B2, B3, B4, B5, B6, B7, B8, B8A, B10, B11, B12]
-  #        [B9, B11, B4, B13, B15, B15, B2, B2, B16, B5, B6, B7]  # had to replace B10 with B11 at idx 1
+  optical: [B1, B2, B3, B4, B5, B6, B7, B8, B8A, B8A, B10, B11, B12]
+  #        [B9, B11, B4, B13, B15, B15, B2, B2, B16, B16, B5, B6, B7]  # had to replace B10 with B11 at idx 1
 
 data_mean:
   optical:
@@ -80,6 +80,9 @@ data_min:
     - 0
     - 0
 
+# may change this later, for now we have hard coded duped bands
+# total of 13 bands are actually passed, but dataset "retrieves" 12
+# see oceancolor dataset class for details
 num_inputs: 12
 num_targets: 1
 target_idx: 12

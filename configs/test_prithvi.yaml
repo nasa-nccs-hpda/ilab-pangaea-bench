@@ -7,9 +7,9 @@ defaults:
   - task: regression
   - dataset: oceancolorval
   - encoder: prithvi
-  - decoder: seg-upernet
+  - decoder: reg_upernet
   - criterion: mse
-  - preprocessing: default
+  - preprocessing: pb_minmax
   - _self_ 
 
 # TRAINING

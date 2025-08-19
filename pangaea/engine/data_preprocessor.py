@@ -235,11 +235,34 @@ class BandPadding(BasePreprocessor):
         if not self.used_bands_indices:
             raise ValueError("No nontrivial input bands after BandPadding!")
 
+    # def __call__(
+    #     self, data: dict[str, torch.Tensor | dict[str, torch.Tensor]]
+    # ) -> dict[str, torch.Tensor | dict[str, torch.Tensor]]:
+    #     for k in self.avail_bands_mask.keys():
+    #         if k in self.used_bands_indices.keys():
+    #             size = self.avail_bands_mask[k].shape + data["image"][k].shape[1:]
+    #             padded_image = torch.full(
+    #                 size, fill_value=self.fill_value, dtype=data["image"][k].dtype
+    #             )
+    #             padded_image[self.avail_bands_mask[k]] = data["image"][k][
+    #                 self.used_bands_indices[k]
+    #             ]
+    #         else:
+    #             reference = data["image"](list(data["image"].keys())[0])
+    #             size = self.avail_bands_mask[k].shape + reference.shape[1:]
+    #             padded_image = torch.full(
+    #                 size, fill_value=self.fill_value, dtype=reference.dtype
+    #             )
+
+    #         data["image"][k] = padded_image
+    #     return data
+
     def __call__(
         self, data: dict[str, torch.Tensor | dict[str, torch.Tensor]]
     ) -> dict[str, torch.Tensor | dict[str, torch.Tensor]]:
         for k in self.avail_bands_mask.keys():
-            if k in self.used_bands_indices.keys():
+            # Skip modalities not present in the data (like 'sar')
+            if k in self.used_bands_indices and k in data["image"]:
                 size = self.avail_bands_mask[k].shape + data["image"][k].shape[1:]
                 padded_image = torch.full(
                     size, fill_value=self.fill_value, dtype=data["image"][k].dtype
@@ -247,16 +270,53 @@ class BandPadding(BasePreprocessor):
                 padded_image[self.avail_bands_mask[k]] = data["image"][k][
                     self.used_bands_indices[k]
                 ]
-            else:
-                reference = data["image"](list(data["image"].keys())[0])
-                size = self.avail_bands_mask[k].shape + reference.shape[1:]
-                padded_image = torch.full(
-                    size, fill_value=self.fill_value, dtype=reference.dtype
-                )
-
-            data["image"][k] = padded_image
+                data["image"][k] = padded_image
+            elif k not in data["image"]:
+                # Create a placeholder for missing modalities if needed
+                if len(data["image"]) > 0:
+                    # Use an existing modality as reference for shape
+                    reference_key = list(data["image"].keys())[0]
+                    reference = data["image"][reference_key]
+                    size = self.avail_bands_mask[k].shape + reference.shape[1:]
+                    padded_image = torch.full(
+                        size, fill_value=self.fill_value, dtype=reference.dtype
+                    )
+                    data["image"][k] = padded_image
+                else:
+                    # Skip if no reference available
+                    continue
+            # No else needed because k is already in data["image"]
         return data
-
+    
+    # def update_meta(self, meta):
+    #     """Tracking the meta statistics/info for next processor."""
+    #     meta["data_bands"] = meta["encoder_bands"]
+    #     for k in self.avail_bands_mask.keys():
+    #         size = self.avail_bands_mask[k].shape
+    #         meta["data_mean"][k] = torch.full(
+    #             size, fill_value=self.fill_value, dtype=torch.float
+    #         )
+    #         meta["data_std"][k] = torch.ones(size, dtype=torch.float)
+    #         meta["data_min"][k] = torch.full(
+    #             size, fill_value=self.fill_value, dtype=torch.float
+    #         )
+    #         meta["data_max"][k] = torch.full(
+    #             size, fill_value=self.fill_value, dtype=torch.float
+    #         )
+    #         if self.used_bands_indices[k] is not None:
+    #             meta["data_mean"][k][self.avail_bands_mask[k]] = meta["data_mean"][k][
+    #                 self.used_bands_indices[k]
+    #             ]
+    #             meta["data_std"][k][self.avail_bands_mask[k]] = meta["data_std"][k][
+    #                 self.used_bands_indices[k]
+    #             ]
+    #             meta["data_min"][k][self.avail_bands_mask[k]] = meta["data_min"][k][
+    #                 self.used_bands_indices[k]
+    #             ]
+    #             meta["data_max"][k][self.avail_bands_mask[k]] = meta["data_max"][k][
+    #                 self.used_bands_indices[k]
+    #             ]
+    #     return meta
     def update_meta(self, meta):
         """Tracking the meta statistics/info for next processor."""
         meta["data_bands"] = meta["encoder_bands"]
@@ -272,7 +332,8 @@ class BandPadding(BasePreprocessor):
             meta["data_max"][k] = torch.full(
                 size, fill_value=self.fill_value, dtype=torch.float
             )
-            if self.used_bands_indices[k] is not None:
+            # Add safety check for missing keys
+            if k in self.used_bands_indices and self.used_bands_indices[k] is not None:
                 meta["data_mean"][k][self.avail_bands_mask[k]] = meta["data_mean"][k][
                     self.used_bands_indices[k]
                 ]
@@ -960,26 +1021,39 @@ class PBMinMaxNorm(BasePreprocessor):
     def __init__(self, **meta) -> None:
         super().__init__()
 
-    def __call__(self, image: np.ndarray):
+    def normalize(self, image: np.ndarray):
         """Transforms input image, maintaining numpy array format. 
-        Expects C,T,H,W format, returns C,T,H,W format."""    
-        normalized_channels = []
+        Expects C,T,H,W format, returns C,T,H,W format."""
+        if image.ndim == 4: # input
+            for c in range(image.shape[0]):
+                channel = image[c, :, :, :]
+                channel_min = np.min(channel)
+                channel_max = np.max(channel)
 
-        for c in range(image.shape[0]):
-            channel = image[c, :, :, :]
-            channel_min = np.min(channel)
-            channel_max = np.max(channel)
+                if channel_max > channel_min:
+                    image[c, :, :, :] = (channel - channel_min) / (channel_max - channel_min)
+                else:
+                    image[c, :, :, :] = channel * 0.0
+        elif image.ndim == 2: # target
+            channel_min = np.min(image)
+            channel_max = np.max(image)
 
             if channel_max > channel_min:
-                norm_channel = (channel - channel_min) / (channel_max - channel_min)
+                image = (image - channel_min) / (channel_max - channel_min)
             else:
-                norm_channel = channel * 0.0
+                image = image * 0.0
 
-            normalized_channels.append(norm_channel)
+        return torch.from_numpy(image).float()
 
-        # Stack channels back together, maintaining CHW format
-        norm = np.stack(normalized_channels, axis=0)
-        return torch.from_numpy(norm).float()
+    def __call__(self, outputs: dict):
+        """Wrapper around the normalization function.
+        Unpacks the outputs dict, normalizes, and repacks them.""" 
+        
+        outputs['image']['optical'] = self.normalize(
+            outputs['image']['optical'])   
+        outputs['target'] = self.normalize(outputs['target'])
+        
+        return outputs
     
     def update_meta(self, meta):
         pass

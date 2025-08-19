@@ -1,6 +1,6 @@
 _target_: pangaea.datasets.ocean_color.OceanColorDataset
 dataset_name: OceanColorDataset
-root_path: /explore/nobackup/people/ajkerr1/SatVision/OceanColor/chips/unique_chips/2020172_1155
+root_path: /explore/nobackup/people/ajkerr1/SatVision/OceanColor/chips/prithvi_chips/train
 download_url: None
 auto_download: False
 img_size: 224
@@ -25,3 +25,4 @@ data_max:
 
 num_inputs: 6
 num_targets: 1
+target_idx: 6

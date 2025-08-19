@@ -12,7 +12,7 @@ test_num_workers: 4
 test_batch_size: 1
 
 # EXPERIMENT
-finetune: false
+finetune: false 
 ckpt_dir: null
 limited_label_train: 1
 limited_label_val: 1

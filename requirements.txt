@@ -20,4 +20,6 @@ pytest
 yacs
 wandb
 hydra-core
+myst-parser
+sphinx
 

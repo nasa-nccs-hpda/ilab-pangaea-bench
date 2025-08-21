@@ -22,5 +22,5 @@ wandb
 hydra-core
 myst-parser
 sphinx>=4.0
-sphinx_rtd_theme
+furo
 

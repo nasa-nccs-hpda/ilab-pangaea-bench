@@ -1,10 +1,8 @@
-# Basic project information
 project = 'ILAB Pangaea Repo'
 copyright = '2024, NASA'
 author = 'Your Name'
 release = '1.0.0'
 
-# Extensions
 extensions = [
     'sphinx.ext.autodoc',      # Auto-generate docs from docstrings
     'sphinx.ext.viewcode',     # Add source code links
@@ -12,10 +10,15 @@ extensions = [
     'myst_parser',             # Markdown (.md) files
 ]
 
-# Theme
-html_theme = 'sphinx_rtd_theme'  # or 'alabaster', 'classic', etc.
+html_theme = 'furo'
 
-# Static files path
+html_theme_options = {
+    "dark_css_variables": {
+        "color-brand-primary": "#336790",
+        "color-brand-content": "#336790",
+    },
+}
+
 html_static_path = ['_static']
 
 source_suffix = {

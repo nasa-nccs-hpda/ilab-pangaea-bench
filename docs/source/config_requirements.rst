@@ -14,6 +14,7 @@ Default fields (found in all config files)
 **Syntax note**: Any fields that require a list of values can either use the traditional YAML list pattern: 
 
 .. code-block:: yaml
+  
   classes:  
     - Bare
     - Developed
@@ -22,6 +23,7 @@ Default fields (found in all config files)
 OR
 
 .. code-block:: yaml
+    
     classes: [Bare, Developed, (etc)]
 
 Criterion
@@ -160,13 +162,13 @@ Represents the desired Machine Learning task being performed by the model (FM en
     * ``device``: ``null``
     * ``criterion``: ``null`` 
   * Parameters to adapt: 
-  * ``n_epochs``: number of epochs to train for.
-  * ``precision``: default value is ``fp32``, can be changed to a different value. Uses PyTorch literals for numerical formats (``int8``, ``fp64``, etc).
-  * ``ckpt_interval``: how often to save a model checkpoint (save every ``ckpt_interval`` epochs).
-  * ``eval_interval``: how often to run evaluation suite (eval every ``eval_interval`` epochs). Best to keep as the same value as ``log_interval`` for accuracy of metrics. 
-  * ``log_interval``: how often to log statistics (log every ``eval_interval`` epochs). Best to keep as the same value as ``eval_interval`` for accuracy of metrics. 
-  * ``best_metric_key``: which metric to use when determining the best model checkpoint. Uses PyTorch syntax (mIoU, val-loss, etc).
-  * ``use_wandb``: ``${use_wandb}`` by default, can be hard-coded to ``true`` or ``false``. 
+    * ``n_epochs``: number of epochs to train for.
+    * ``precision``: default value is ``fp32``, can be changed to a different value. Uses PyTorch literals for numerical formats (``int8``, ``fp64``, etc).
+    * ``ckpt_interval``: how often to save a model checkpoint (save every ``ckpt_interval`` epochs).
+    * ``eval_interval``: how often to run evaluation suite (eval every ``eval_interval`` epochs). Best to keep as the same value as ``log_interval`` for accuracy of metrics. 
+    * ``log_interval``: how often to log statistics (log every ``eval_interval`` epochs). Best to keep as the same value as ``eval_interval`` for accuracy of metrics. 
+    * ``best_metric_key``: which metric to use when determining the best model checkpoint. Uses PyTorch syntax (mIoU, val-loss, etc).
+    * ``use_wandb``: ``${use_wandb}`` by default, can be hard-coded to ``true`` or ``false``. 
 
 * ``evaluator``: represents the PyTorch Lightning Trainer object used to evaluate the model (every ``eval_interval`` epochs, as set in the trainer).
   * ``_target_``: set to desired task-specific evaluator (``pangaea.engine.trainer.{Evaluator_ClassName}``). Can code a custom evaluator if desired.
@@ -183,6 +185,7 @@ Train
 This config defines the training behavior of the ``run.py`` script, using PyTorch Lightning. Make a copy or edit the train.yaml directly to change behavior.
 
 Basic options: these can often be left alone.
+
 * ``train``: leave as ``true``
 * ``work_dir``: where to save model outputs (checkpoints, logs, etc). Empty string is default value, so this defaults to current working directory.
 * ``seed``: random seed to use in PyTorch Lightning. ``234`` by default.
@@ -190,12 +193,14 @@ Basic options: these can often be left alone.
 * ``wandb_run_id``: what to name the wandb run. ``null`` by default.
 
 Parallelization options: increase based on your hardware, larger numbers mean more parallelization but also more compute.
+
 * ``num_workers``: how many PyTorch lightning workers to use. ``4`` by default.
 * ``batch_size``: how many images per training batch to supply. ``8`` by default.
 * ``test_num_workers``: how many workers to use for testing. ``4`` by default.
 * ``test_batch_size``: how many images per testing batch to supply. ``1`` by default.
 
 Hyperparameters and other options:
+
 * ``finetune``: whether to finetune encoder weights. ``false`` by default (frozen encoder).
 * ``ckpt_dir``: where to save model checkpoint
 * ``limited_label_train``: ``1`` by default.
@@ -209,16 +214,16 @@ Defaults: keep these as they are, these will be overwritten in ``run.py`` during
 
 .. code-block:: yaml
 
-defaults:
-  - task: ???
-  - dataset: ???
-  - encoder: ???
-  - decoder: ???
-  - preprocessing: ???
-  - criterion: ???
-  - lr_scheduler: multi_step_lr
-  - optimizer: adamw
-  - _self_
+    defaults:
+    - task: ???
+    - dataset: ???
+    - encoder: ???
+    - decoder: ???
+    - preprocessing: ???
+    - criterion: ???
+    - lr_scheduler: multi_step_lr
+    - optimizer: adamw
+    - _self_
 
 Test
 ----

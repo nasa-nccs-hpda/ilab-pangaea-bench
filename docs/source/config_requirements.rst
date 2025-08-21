@@ -31,19 +31,19 @@ Example: ``sen1floods11.yaml``.
 * ``classes``: Names of classes. Must be supplied as a list, using either tabbed dash characters, or pythonic [] syntax.
 * ``distribution``: Distribution of data among classes. For non-classification tasks this can be left blank or be filled with dummy values.
 * ``bands``: Contains a list of bands, separated by modality. The default modality for single-modality data is optical; if you are unsure of your modality, just put band numbers here. Band numbers should be input in the form: 
-.. code-block:: yaml
-    bands:
-      - optical:
-        - B1
-        - B2
-        - (etc)
+  .. code-block:: yaml
+      bands:
+        - optical:
+          - B1
+          - B2
+          - (etc)
 * ``data_mean``, ``data_std``, ``data_max``, ``data_min``: Statistics of the dataset, which are used during preprocessing. If your dataset does not use preprocessing, these can be filled with dummy values. Include one value per band, per modality.
-.. code-block:: yaml 
-    data_mean:
-      - optical:
-        - 0.25
-        - 0.1
-        - (etc)
+  .. code-block:: yaml 
+      data_mean:
+        - optical:
+          - 0.25
+          - 0.1
+          - (etc)
 
 Train, Test
 -----------

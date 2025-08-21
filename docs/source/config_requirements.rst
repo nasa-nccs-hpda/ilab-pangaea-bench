@@ -11,21 +11,6 @@ Default fields (found in all config files)
 
 **Note**: Any fields that are listed in the subsections below are **in addition to** the fields listed in the bulletpoints above. 
 
-**Syntax note**: Any fields that require a list of values can either use the traditional YAML list pattern: 
-
-.. code-block:: yaml
-  
-  classes:  
-    - Bare
-    - Developed
-    - (etc)
-
-OR
-
-.. code-block:: yaml
-    
-    classes: [Bare, Developed, (etc)]
-
 Criterion
 ---------
 Also known as loss functions. Contains only default fields (see "all configs" section).
@@ -36,15 +21,15 @@ Represents the data the model will use to train, validate, and test.
 
 Example: ``sen1floods11.yaml``
 
-* ``dataset_name``: The final part of the ``\_target\_``, also known as the class name. 
+* ``dataset_name``: The final part of the ``_target_``, also known as the class name. 
 * ``root_path``: Where to gather data from. If data is downloaded, this must be the destination folder for the download. 
 * ``download_url``: For downloaded data, enter the correct URL. Otherwise this can be left blank. 
-* ``auto_download``: Whether to automatically download or prompt the user to download. For local data, this can be left False. 
-* ``img_size``: Size of each image file in pixels. Images are expected to be square. 
+* ``auto_download``: Whether to automatically download or prompt the user to download. For local data, this can be left ``False``. 
+* ``img_size``: Size of each image file in pixels. Assumes image height and width are the same.
 * ``multi_temporal``: Whether data is multi temporal, True or False. 
 * ``multi_modal``: Whether data is multi modal, True or False. 
-* ``ignore_index``: Indices to ignore when loading data. -1 is the default value. 
-* ``num_classes``: Number of classes for classification. Default value is 1, can be left alone for non-classification tasks. 
+* ``ignore_index``: Indices to ignore when loading data. ``-1`` is the default value. 
+* ``num_classes``: Number of classes for classification. Default value is ``1``, can be left alone for non-classification tasks. 
 * ``classes``: List of class names.
 * ``distribution``: Distribution of data among classes. For non-classification tasks this can be left blank or be filled with dummy values.
 * ``bands``: Contains a list of bands, separated by modality. The default modality for single-modality data is optical; if you are unsure of your modality, just put band numbers as optical. Band numbers should be of the form: 
@@ -132,8 +117,10 @@ This defines what preprocessing will occur on the data during different stages o
 Example: ``seg_default.yaml``
 
 * ``train``, ``val``, ``test``: which type of processing to apply during each phase. These can all be the same or all be different depending on the application. Each section has its own subsection, as listed below. 
+  
   * ``_target_``: always set to ``pangaea.engine.data_preprocessor.Preprocessor``, since all preprocessing is done by this class. 
   * ``preprocessor_cfg``: for specific preprocessor class that inherits from the base preprocessor. Contains multiple copies of ``_target_``, depending on how many transforms will happen sequentially. There must be at least 1 ``_target_`` present.
+    
     * ``_target_``: usual syntax (see "all configs" section). Since all preprocessing happens in pangea.engine.data_preprocessor.py, this must be of the form ``pangaea.engine.data_preprocessor.{Class_Name}``.
 
 Example: 
@@ -151,8 +138,10 @@ Task
 Represents the desired Machine Learning task being performed by the model (FM encoder, and decoder). This can be regression, segmentation, or any other function outlined by the ``.yaml`` files in the directory, or a custom task.
 
 * ``trainer``: represents the PyTorch Lightning Trainer object used to train the model. This section has a llist of parameters that the trainer requires. 
+  
   * ``_target_``: set to desired task-specific trainer (``pangaea.engine.trainer.{Trainer_ClassName}``). Can code a custom trainer if desired.
-  * Parameters overwrittern in ``run.py``: leave as the default value or hard-code here
+  * Parameters overwritten in ``run.py``: leave as the default value or hard-code here
+    
     * ``model``: ``null``
     * ``train_loader``: ``null``
     * ``optimizer``: ``null``
@@ -161,7 +150,9 @@ Represents the desired Machine Learning task being performed by the model (FM en
     * ``exp_dir``: ``null``
     * ``device``: ``null``
     * ``criterion``: ``null`` 
+  
   * Parameters to adapt: 
+    
     * ``n_epochs``: number of epochs to train for.
     * ``precision``: default value is ``fp32``, can be changed to a different value. Uses PyTorch literals for numerical formats (``int8``, ``fp64``, etc).
     * ``ckpt_interval``: how often to save a model checkpoint (save every ``ckpt_interval`` epochs).
@@ -171,8 +162,10 @@ Represents the desired Machine Learning task being performed by the model (FM en
     * ``use_wandb``: ``${use_wandb}`` by default, can be hard-coded to ``true`` or ``false``. 
 
 * ``evaluator``: represents the PyTorch Lightning Trainer object used to evaluate the model (every ``eval_interval`` epochs, as set in the trainer).
+  
   * ``_target_``: set to desired task-specific evaluator (``pangaea.engine.trainer.{Evaluator_ClassName}``). Can code a custom evaluator if desired.
   * Parameters overwrittern in ``run.py``: leave as the default value or hard-code
+    
     * ``val_loader``: ``null``
     * ``exp_dir``: ``null``
     * ``device``: ``null``

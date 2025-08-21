@@ -1,5 +1,5 @@
 # Basic project information
-project = 'Your Project Name'
+project = 'ILAB Pangaea Fork'
 copyright = '2024, Your Name'
 author = 'Your Name'
 release = '1.0.0'

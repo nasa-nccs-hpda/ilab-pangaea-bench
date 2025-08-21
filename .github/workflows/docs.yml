@@ -2,7 +2,7 @@ name: Build and Deploy Documentation
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main ]  # or your default branch
   pull_request:
     branches: [ main ]
 
@@ -19,7 +19,7 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5  # ← Updated from v4
       with:
         python-version: '3.10'
     
@@ -33,7 +33,7 @@ jobs:
         make html
     
     - name: Upload artifact
-      uses: actions/upload-pages-artifact@v2
+      uses: actions/upload-pages-artifact@v3  # ← Updated from v2
       with:
         path: docs/_build/html
 
@@ -46,4 +46,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4  # ← Updated from v2

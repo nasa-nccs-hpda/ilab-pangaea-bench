@@ -8,7 +8,6 @@ We have developed this repo to allow for easy use of Earth Observation Foundatio
    :maxdepth: 2
    :caption: Contents:
 
-   installation
    config_requirements
    troubleshooting
 

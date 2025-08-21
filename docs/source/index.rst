@@ -36,11 +36,13 @@ required to achieve this functionality.
 
 More information
 ~~~~~~~~~~~~~~~~
-* `Contributing Guide <CONTRIBUTING.md>`_
-* `Dataset Guide <DATASET_GUIDE.md>`_
+* `Contributing Guide <CONTRIBUTING.md>`_: contains more information on the steps necessary to get a model up and running.
+* `Dataset Guide <DATASET_GUIDE.md>`_: contains more information on implementing custom datasets, and some examples of running some already-implemented datasets.
 
 Training
 --------
+
+Training a model is done using a console command. 
 
 To train a model, you must ensure that you've modified the appropriate .yaml files, as mentioned above. Some functionality
 (such as loading a user-created dataset) will also require coding a custom python class. Some require their own file (such as a

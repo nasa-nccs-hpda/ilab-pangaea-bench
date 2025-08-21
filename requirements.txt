@@ -21,5 +21,6 @@ yacs
 wandb
 hydra-core
 myst-parser
-sphinx
+sphinx>=4.0
+sphinx_rtd_theme
 

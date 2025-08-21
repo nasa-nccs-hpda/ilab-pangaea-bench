@@ -2,13 +2,30 @@ ILAB Pangaea Repo
 =================
 
 Welcome to the ILAB fork of the Pangaea Foundation Model benchmarking repo. 
-We have developed this repo to allow for easy use of Earth Observation Foundation Models at NASA Goddard. 
+We have developed this repo to allow for easy use of Earth Observation Foundation Models at NASA Goddard.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   installation
+   config_requirements
+   troubleshooting
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
 
 Getting Started
 ---------------
 
 To get started, clone the repository at `https://github.com/nasa-nccs-hpda/ilab-pangaea-bench.git <https://github.com/nasa-nccs-hpda/ilab-pangaea-bench.git>`_. 
-This repository is split into 2 main parts: configs and pangaea itself. These represent two sides of the code: pangaea hosts the python code that is executed, config contains files that edit the functionality of the pangaea code. For example, a custom dataset must be coded in the pangaea dataset folder, and must be configured in the configs dataset folder. For most applications, this means that very little coding must be done, since much of what's added to this repo supports many different combinations of user configuration. Thus, most of users' time will be spent configuring behaviors in the configs directory. 
+This repository is split into 2 main parts, configs and pangaea. These represent two sides of the code: pangaea hosts the python code that is executed, config contains files that edit the functionality of the pangaea code. For example, a custom dataset must be coded in the pangaea dataset folder, and must be configured in the configs dataset folder. 
+
+For most applications, this means that very little coding must be done, since much of what's added to this repo supports many different combinations of user configuration. Thus, most of users' time will be spent configuring behaviors in the configs directory. 
 
 Adding custom classes
 ~~~~~~~~~~~~~~~~~~~~~

@@ -1,6 +1,6 @@
 # Basic project information
-project = 'ILAB Pangaea Fork'
-copyright = '2024, Your Name'
+project = 'ILAB Pangaea Repo'
+copyright = '2024, NASA'
 author = 'Your Name'
 release = '1.0.0'
 

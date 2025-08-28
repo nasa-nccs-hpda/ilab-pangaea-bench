@@ -9,6 +9,28 @@ Default fields (found in all config files)
 * ``_target_``: contains the Python module syntax for the class to use. In other words, if a config has a target called ``torch.nn.MSELoss``, Python will look for the MSELoss class in the Python package ``torch`` (also known as PyTorch), under the module ``nn``. 
 * Other parameters: If you code a custom class that needs certain parameters, these need to be present in the config. This is how the driver script (``run.py``) knows how to initialize your custom class. 
 
+For example:  
+
+  .. code-block:: python
+
+    # Real Dataset class would look different, since it inherits from the Pangaea
+    # RawGeoFM dataset
+    class CustomDataset()
+      
+      def __init__(self, custom_var_1, custom_var_2):
+        self.custom_var_1 = custom_var_1
+        self.custom_var_2 = custom_var_2
+  
+  .. code-block:: yaml
+
+    # Generic Dataset required fields
+
+    [...]
+
+    # custom fields
+    custom_var_1: 87
+    custom_var_2: "mean"
+
 **Note**: Any fields that are listed in the subsections below are **in addition to** the fields listed in the bulletpoints above. 
 
 Criterion

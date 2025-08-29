@@ -10,7 +10,7 @@ defaults = {
 
 
 def get_folder_options(base_path):
-    path = os.path.join(("ilab-pangaea-bench/pangaea/configs"), base_path)
+    path = os.path.join(("ilab-pangaea-bench/configs"), base_path)
     return [
         os.path.splitext(fn)[0]
         for fn in os.listdir(path)

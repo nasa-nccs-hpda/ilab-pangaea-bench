@@ -10,7 +10,7 @@ defaults = {
 
 
 def get_folder_options(base_path):
-    path = os.path.join(("../configs"), base_path)
+    path = os.path.join(("ilab-pangaea-bench/pangaea/configs"), base_path)
     return [
         os.path.splitext(fn)[0]
         for fn in os.listdir(path)
@@ -23,15 +23,15 @@ def is_valid_override(value):
     # Always keep boolean False
     if value is False:
         return True
-    
+
     # Reject empty strings
     if value == "":
         return False
-    
+
     # Reject negative numbers
     if isinstance(value, (int, float)) and value < 0:
         return False
-    
+
     # Keep everything else that's truthy
     return bool(value)
 

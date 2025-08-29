@@ -27,11 +27,11 @@ For example:
 
     [...]
 
-    # custom fields
+    # Custom fields
     custom_var_1: 87
     custom_var_2: "mean"
 
-**Note**: Any fields that are listed in the subsections below are **in addition to** the fields listed in the bulletpoints above. 
+**Note**: Any fields that are listed in the subsections below are **in addition to** the fields listed in the bulletpoints above (targets and custom parameters). 
 
 Criterion
 ---------
@@ -74,8 +74,6 @@ Example: ``sen1floods11.yaml``
         - 0.1
         - (etc)
 
-* (any other custom parameters for dataset class)
-
 Decoder
 -------
 
@@ -86,7 +84,6 @@ Example: ``seg_upernet.yaml``
 * ``encoder``: leave this as ``null``, as this will populate automatically. 
 * ``num_classes``: leave this as ``${dataset.num_classes}``, as this will populate automatically. 
 * ``finetune``: leave this as ``false``, as this will populate automatically. 
-* (any other custom parameters for decoder class)
 
 Encoder
 -------
@@ -119,7 +116,7 @@ Example: ``prithvi.yaml``
       - 11
 
 * ``output_dim``: size of output. Assumes output embedding height and width are the same. 
-* (any other custom parameters for encoder class)
+* Any other parameters specific to your encoder (see configs/encoder for reference)
 
 LR Scheduler
 ------------

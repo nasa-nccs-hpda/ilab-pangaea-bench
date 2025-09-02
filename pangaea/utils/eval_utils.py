@@ -391,7 +391,7 @@ def _scatter_plot(
     return fig
 
 
-def create_scatter_plot(
+def plot_results_scatter(
     targets, predictions, save_dir, png_prefix
 ):
     """Evaluate model and create comparison visualization."""

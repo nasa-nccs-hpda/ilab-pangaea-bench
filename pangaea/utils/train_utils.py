@@ -92,27 +92,3 @@ def build_config(
     print(f"Config saved to {yaml_filename}")
 
     return cfg_updated, yaml_filename.split(".")[0]
-
-
-def print_cfg_rec(cfg, indent=0):
-    cfg = dict(cfg)
-
-    def _build_string(cfg, indent=0):
-        result = []
-        if isinstance(cfg, dict):
-            for key, value in cfg.items():
-                result.append('    ' * indent + str(key) + ':')
-                if isinstance(value, (dict, list)):
-                    result.append(_build_string(value, indent + 1))
-                else:
-                    result.append('    ' * (indent + 1) + str(value))
-        elif isinstance(cfg, list):
-            for i, item in enumerate(cfg):
-                result.append('    ' * indent + f"[{i}]:")
-                if isinstance(item, (dict, list)):
-                    result.append(_build_string(item, indent + 1))
-                else:
-                    result.append('    ' * (indent + 1) + str(item))
-        return '\n'.join(result)
-
-    print(_build_string(cfg, indent))

@@ -1,34 +1,33 @@
 name: pangaea-bench
 channels:
-  - pytorch
-  - nvidia
   - conda-forge
-  - nodefaults
 dependencies:
-  - python=3.10
+  - einops
+  - fastai::opencv-python-headless
+  - gdown
   - geopandas
-  - numpy>=2.0
+  - google-cloud-storage
+  - hydra-core
+  - numpy[version='>=1.21,<2.0']
+  - omegaconf
   - pillow
-  - pytorch>=2.1
+  - ptflops
+  - pydataverse
+  - pytest
+  - python=3.10
+  - pytorch-cuda=11.8
+  - pytorch[version='>=2.1']
   - rasterio
+  - rioxarray
   - scikit-learn
   - tensorboard
+  - tifffile
+  - timm
   - torchaudio
   - torchvision
   - tqdm
-  - tifffile
-  - timm
-  - einops
-  - rioxarray
-  - pytorch-cuda=11.8
-  - gdown
-  - ptflops
-  - fastai::opencv-python-headless
-  - google-cloud-storage
-  - omegaconf
-  - pydataverse
-  - pytest
-  - yacs
   - wandb
-  - hydra-core
-
+  - yacs
+  - ipykernel
+  - nb_conda_kernels
+  - torchmetrics

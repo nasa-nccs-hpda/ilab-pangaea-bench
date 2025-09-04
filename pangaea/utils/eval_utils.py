@@ -271,11 +271,6 @@ def test_loop(cfg, model, device, test_loader, logger):
     if not isinstance(metric_value, torch.Tensor):
         metric_value = torch.tensor(metric_value, device=device)
 
-    # Perform all_reduce operation
-    torch.distributed.all_reduce(
-        metric_value, op=torch.distributed.ReduceOp.SUM
-    )
-
     # Average the metric
     metric_value = metric_value / len(test_loader)
 

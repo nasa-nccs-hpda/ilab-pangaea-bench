@@ -91,7 +91,9 @@ def _get_state_dict(ckpt_dir, device):
     )
     # Load ckpt to model
     ckpt_path = best_ckpts[0]
-    state_dict = torch.load(ckpt_path, map_location=device, weights_only=False)["model"]
+    state_dict = torch.load(
+        ckpt_path, map_location=device, weights_only=False
+    )["model"]
     return state_dict
 
 
@@ -115,15 +117,15 @@ def _apply_checkpoint(state_dict, model):
 
 
 def load_apply_ckpt(ckpt_dir, device, model, logger, logger_verbosity):
-    if (logger_verbosity > 0):
+    if logger_verbosity > 0:
         logger.info("Loading checkpoint...")
     state_dict = _get_state_dict(ckpt_dir, device)
-    if (logger_verbosity > 0):
+    if logger_verbosity > 0:
         logger.info("State dict loaded from checkpoint.")
         logger.info("Applying checkpoint to model...")
     model = _apply_checkpoint(state_dict, model)
     model.eval()
-    if (logger_verbosity > 0):
+    if logger_verbosity > 0:
         logger.info("Applied model checkpoint successfully.")
     return model
 
@@ -153,7 +155,7 @@ def _get_task(cfg):
 
     # Check if this is a multi-label task
     is_multi_label = (
-        hasattr(cfg.task.evaluator, "multi_label") 
+        hasattr(cfg.task.evaluator, "multi_label")
         and cfg.task.evaluator.multi_label
     )
 
@@ -229,7 +231,7 @@ def _get_metric(preds, targets, cfg, task, test_dict, device):
     return metric_value
 
 
-def eval_loop(cfg, model, device, test_loader):
+def test_loop(cfg, model, device, test_loader, logger):
     # Extract task from cfg so we can predict accurately
     task = _get_task(cfg)
     print(f"task: {task}")
@@ -261,19 +263,41 @@ def eval_loop(cfg, model, device, test_loader):
                 preds, targets, cfg, task, test_dict, device
             )
 
+    # After the loop, average the metric
+    metric_name = test_dict["metric"]["name"]
+    metric_value = test_dict["metric"]["value"]
+
+    # Convert to tensor if it's not already
+    if not isinstance(metric_value, torch.Tensor):
+        metric_value = torch.tensor(metric_value, device=device)
+
+    # Perform all_reduce operation
+    torch.distributed.all_reduce(
+        metric_value, op=torch.distributed.ReduceOp.SUM
+    )
+
+    # Average the metric
+    metric_value = metric_value / len(test_loader)
+
+    # Update the test_dict with the averaged metric
+    test_dict["metric"]["value"] = metric_value.item()
+
+    # Log average metric
+    logger.info(
+        f"metric {metric_name} average over all eval samples: {metric_value}"
+    )
+
     for key in ["targets", "preds"]:
         test_dict[key] = np.concatenate(test_dict[key], axis=0)
 
     return test_dict
 
 
-def plot_results_heatmap(
-    targets, preds, save_dir, png_prefix
-):
+def plot_results_heatmap(targets, preds, save_dir, png_prefix):
     # Make targets and preds 3D tensors if they are not
-    if (targets.ndim > 3):
+    if targets.ndim > 3:
         targets = np.squeeze(targets, axis=0)
-    if (preds.ndim > 3):
+    if preds.ndim > 3:
         preds = np.squeeze(preds, axis=0)
 
     # Plot 5 samples by default
@@ -290,28 +314,34 @@ def plot_results_heatmap(
     batch_size = batch_targets.shape[0]
     nrows, ncols = (2, batch_size)  # tuple of rows and columns
 
-    fig, axes = plt.subplots(nrows, ncols, figsize=(3*ncols, 6))
+    fig, axes = plt.subplots(nrows, ncols, figsize=(3 * ncols, 6))
 
     if ncols == 1:  # Handle case of single pair (ncols=1)
         axes = axes.reshape(2, 1)
     for j in range(batch_size):
         # Top row: Targets
         ax = axes[0, j]
-        ax.imshow(batch_targets[j], cmap='viridis', norm=norm)
+        ax.imshow(batch_targets[j], cmap="viridis", norm=norm)
         ax.set_title("Target")
-        ax.axis('off')
+        ax.axis("off")
         fig.colorbar(
-            ax.images[0], ax=ax, orientation='vertical', fraction=0.046,
-            pad=0.04
+            ax.images[0],
+            ax=ax,
+            orientation="vertical",
+            fraction=0.046,
+            pad=0.04,
         )
         # Bottom row: preds
         ax = axes[1, j]
-        ax.imshow(batch_preds[j], cmap='viridis', norm=norm)
+        ax.imshow(batch_preds[j], cmap="viridis", norm=norm)
         ax.set_title("Prediction")
-        ax.axis('off')
+        ax.axis("off")
         fig.colorbar(
-            ax.images[0], ax=ax, orientation='vertical', fraction=0.046,
-            pad=0.04
+            ax.images[0],
+            ax=ax,
+            orientation="vertical",
+            fraction=0.046,
+            pad=0.04,
         )
 
     plt.tight_layout()
@@ -327,63 +357,65 @@ def _preds_df(targets, predictions):
     all_preds = predictions.flatten()
 
     # Calculate R² directly from the arrays
-    r2 = np.corrcoef(all_targets, all_preds)[0, 1]**2
+    r2 = np.corrcoef(all_targets, all_preds)[0, 1] ** 2
     print(f"R² calculated directly: {r2:.4f}")
 
     # Create the DataFrame more directly
-    df = pd.DataFrame({
-        'actual': all_targets,
-        'predicted': all_preds
-    })
+    df = pd.DataFrame({"actual": all_targets, "predicted": all_preds})
 
     return df
 
 
 def _scatter_plot(
-    val_df, bins=50, title='Actual vs. Predicted Chlor A', cmap='plasma'
+    val_df, bins=50, title="Actual vs. Predicted Chlor A", cmap="plasma"
 ):
     """
     Create a single bin2d plot using matplotlib with plasma colormap
     and properly positioned colorbar.
     """
     # Determine range for the plot
-    min_val = min(val_df['actual'].min(), val_df['predicted'].min())
-    max_val = max(val_df['actual'].max(), val_df['predicted'].max())
+    min_val = min(val_df["actual"].min(), val_df["predicted"].min())
+    max_val = max(val_df["actual"].max(), val_df["predicted"].max())
 
     # Calculate metrics
-    val_r2 = np.corrcoef(val_df['actual'], val_df['predicted'])[0, 1]**2
-    val_rmse = np.sqrt(np.mean((val_df['actual'] - val_df['predicted'])**2))
+    val_r2 = np.corrcoef(val_df["actual"], val_df["predicted"])[0, 1] ** 2
+    val_rmse = np.sqrt(np.mean((val_df["actual"] - val_df["predicted"]) ** 2))
 
     # Create the figure and axis
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
 
     # Create the histogram2d plot
-    h = ax.hist2d(val_df['actual'], val_df['predicted'], bins=bins, 
-                  cmap=cmap, norm=plt.matplotlib.colors.LogNorm())
+    h = ax.hist2d(
+        val_df["actual"],
+        val_df["predicted"],
+        bins=bins,
+        cmap=cmap,
+        norm=plt.matplotlib.colors.LogNorm(),
+    )
 
     # Add the 1:1 line
-    ax.plot([min_val, max_val], [min_val, max_val], 'b--', linewidth=1.5)
+    ax.plot([min_val, max_val], [min_val, max_val], "b--", linewidth=1.5)
 
     # Set labels and title
-    ax.set_xlabel('Actual Chlor A', fontsize=12)
-    ax.set_ylabel('Predicted Chlor A', fontsize=12)
+    ax.set_xlabel("Actual Chlor A", fontsize=12)
+    ax.set_ylabel("Predicted Chlor A", fontsize=12)
     ax.set_title(
-        f'Validation\nR² = {val_r2:.3f}, RMSE = {val_rmse:.3f}', fontsize=14
+        f"Validation\nR² = {val_r2:.3f}, RMSE = {val_rmse:.3f}", fontsize=14
     )
 
     # Set axis properties
     ax.set_xlim(min_val, max_val)
     ax.set_ylim(min_val, max_val)
-    ax.set_aspect('equal')
+    ax.set_aspect("equal")
     ax.grid(alpha=0.3)
 
     # Add colorbar
     cbar = plt.colorbar(h[3], ax=ax)
-    cbar.set_label('Count (log scale)', fontsize=12)
+    cbar.set_label("Count (log scale)", fontsize=12)
     cbar.ax.tick_params(labelsize=10)
 
     # Add main title
-    fig.suptitle(title, fontsize=16, fontweight='bold')
+    fig.suptitle(title, fontsize=16, fontweight="bold")
 
     # Adjust layout
     plt.tight_layout()
@@ -391,9 +423,7 @@ def _scatter_plot(
     return fig
 
 
-def plot_results_scatter(
-    targets, predictions, save_dir, png_prefix
-):
+def plot_results_scatter(targets, predictions, save_dir, png_prefix):
     """Evaluate model and create comparison visualization."""
     print("Collecting validation predictions...")
     val_df = _preds_df(targets, predictions)
@@ -402,10 +432,10 @@ def plot_results_scatter(
     fig = _scatter_plot(val_df)
     print(f"Validation samples: {len(val_df)}")
     # Calculate and print additional metrics
-    val_r2 = np.corrcoef(val_df['actual'], val_df['predicted'])[0, 1]**2
-    val_rmse = np.sqrt(np.mean((val_df['actual'] - val_df['predicted'])**2))
+    val_r2 = np.corrcoef(val_df["actual"], val_df["predicted"])[0, 1] ** 2
+    val_rmse = np.sqrt(np.mean((val_df["actual"] - val_df["predicted"]) ** 2))
     print(f"Validation R²: {val_r2:.4f}, RMSE: {val_rmse:.4f}")
     # Save the figure
     save_path = os.path.join(save_dir, f"{png_prefix}.png")
-    fig.savefig(save_path, dpi=300, bbox_inches='tight')
+    fig.savefig(save_path, dpi=300, bbox_inches="tight")
     return fig, val_df

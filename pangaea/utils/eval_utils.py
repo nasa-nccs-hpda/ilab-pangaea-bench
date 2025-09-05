@@ -10,6 +10,9 @@ from matplotlib.colors import Normalize
 from sklearn.metrics import f1_score
 from torchmetrics.classification import JaccardIndex
 from tqdm import tqdm
+import warnings
+import seaborn as sns
+from sklearn.metrics import confusion_matrix, classification_report
 
 
 def config_cuda(
@@ -288,7 +291,28 @@ def test_loop(cfg, model, device, test_loader, logger):
     return test_dict
 
 
-def plot_results_heatmap(targets, preds, save_dir, png_prefix):
+def _get_cmap_from_task(cfg):
+    task = _get_task(cfg)
+    cmap = "viridis"
+    # Discrete cmaps for class/seg
+    if task == "classification" or task == "segmentation":
+        if (cfg.dataset.num_classes > 10) and (cfg.dataset.num_classes < 20):
+            cmap = "tab20b"
+        elif cfg.dataset.num_classes <= 10:
+            cmap = "tab10"
+        else:
+            warnings.warn(
+                ">20 classes detected for seg/class task."
+                "Using viridis colormap."
+            )
+    elif task == "change_detection":
+        cmap = "RdBu_r"
+    elif task in ["knn_probe", "knn_probe_multi_label"]:
+        cmap = "YlGnBu"  # Yellow-Green-Blue, good for distances/probabilities
+    return cmap
+
+
+def plot_results_heatmap(cfg, targets, preds, save_dir, png_prefix):
     # Make targets and preds 3D tensors if they are not
     if targets.ndim > 3:
         targets = np.squeeze(targets, axis=0)
@@ -297,6 +321,9 @@ def plot_results_heatmap(targets, preds, save_dir, png_prefix):
 
     # Plot 5 samples by default
     num_samples = 5
+
+    # Get task from config to inform color choices
+    cmap = _get_cmap_from_task(cfg)
 
     # Normalize colormaps to show accurate data ranges
     all_data = np.concatenate([targets, preds])
@@ -316,7 +343,7 @@ def plot_results_heatmap(targets, preds, save_dir, png_prefix):
     for j in range(batch_size):
         # Top row: Targets
         ax = axes[0, j]
-        ax.imshow(batch_targets[j], cmap="viridis", norm=norm)
+        ax.imshow(batch_targets[j], cmap=cmap, norm=norm)
         ax.set_title("Target")
         ax.axis("off")
         fig.colorbar(
@@ -328,7 +355,7 @@ def plot_results_heatmap(targets, preds, save_dir, png_prefix):
         )
         # Bottom row: preds
         ax = axes[1, j]
-        ax.imshow(batch_preds[j], cmap="viridis", norm=norm)
+        ax.imshow(batch_preds[j], cmap=cmap, norm=norm)
         ax.set_title("Prediction")
         ax.axis("off")
         fig.colorbar(
@@ -345,7 +372,7 @@ def plot_results_heatmap(targets, preds, save_dir, png_prefix):
     return fig
 
 
-def _preds_df(targets, predictions):
+def _data_to_df(targets, predictions):
     """Create Pandas DataFrame with flattened predictions."""
     # Convert to numpy arrays directly without list appending and concatenation
     all_targets = targets.flatten()
@@ -362,7 +389,7 @@ def _preds_df(targets, predictions):
 
 
 def _scatter_plot(
-    val_df, bins=50, title="Actual vs. Predicted Chlor A", cmap="plasma"
+    val_df, bins=50, title="Target vs Predicted Data Similarity", cmap="plasma"
 ):
     """
     Create a single bin2d plot using matplotlib with plasma colormap
@@ -392,8 +419,8 @@ def _scatter_plot(
     ax.plot([min_val, max_val], [min_val, max_val], "b--", linewidth=1.5)
 
     # Set labels and title
-    ax.set_xlabel("Actual Chlor A", fontsize=12)
-    ax.set_ylabel("Predicted Chlor A", fontsize=12)
+    ax.set_xlabel("Actual Data", fontsize=12)
+    ax.set_ylabel("Predicted Data", fontsize=12)
     ax.set_title(
         f"Validation\nR² = {val_r2:.3f}, RMSE = {val_rmse:.3f}", fontsize=14
     )
@@ -418,10 +445,10 @@ def _scatter_plot(
     return fig
 
 
-def plot_results_scatter(targets, predictions, save_dir, png_prefix):
+def _plot_results_scatter(cfg, targets, predictions, save_dir, png_prefix):
     """Evaluate model and create comparison visualization."""
     print("Collecting validation predictions...")
-    val_df = _preds_df(targets, predictions)
+    val_df = _data_to_df(targets, predictions)
     print("Creating visualization...")
     # Use matplotlib with plasma colormap
     fig = _scatter_plot(val_df)
@@ -434,3 +461,119 @@ def plot_results_scatter(targets, predictions, save_dir, png_prefix):
     save_path = os.path.join(save_dir, f"{png_prefix}.png")
     fig.savefig(save_path, dpi=300, bbox_inches="tight")
     return fig, val_df
+
+
+def _plot_confusion_matrix_from_df(
+    df,
+    class_names=None,
+    figsize=(10, 8),
+    normalize=False,
+    title="Confusion Matrix",
+):
+    """
+    Plot confusion matrix using seaborn from a pandas DataFrame
+
+    Parameters:
+    df: pandas DataFrame with 'actual' and 'predicted' columns
+    class_names: list, names of classes (optional)
+    figsize: tuple, figure size
+    normalize: bool, whether to normalize the matrix
+    title: str, plot title
+    """
+
+    # Calculate confusion matrix from DataFrame
+    cm = confusion_matrix(df["actual"], df["predicted"])
+
+    # Determine class names if not provided
+    if class_names is None:
+        all_classes = sorted(
+            set(
+                np.concatenate(
+                    [df["actual"].unique(), df["predicted"].unique()]
+                )
+            )
+        )
+        class_names = [str(c) for c in all_classes]
+
+    # Normalize if requested
+    if normalize:
+        cm = cm.astype("float") / cm.sum(axis=1)[:, np.newaxis]
+        fmt = ".2f"
+    else:
+        fmt = "d"
+
+    # Create figure
+    plt.figure(figsize=figsize)
+
+    # Create heatmap
+    sns.heatmap(
+        cm,
+        annot=True,  # Show numbers in cells
+        fmt=fmt,  # Number format
+        cmap="Blues",  # Color scheme
+        square=True,  # Square cells
+        linewidths=0.5,  # Grid lines
+        cbar_kws={"shrink": 0.8},
+        xticklabels=class_names,
+        yticklabels=class_names,
+    )
+
+    plt.title(title, fontsize=16, pad=20)
+    plt.ylabel("True Label", fontsize=12)
+    plt.xlabel("Predicted Label", fontsize=12)
+    plt.tight_layout()
+
+    # Return confusion matrix for further analysis if needed
+    return fig, cm
+
+
+def _plot_results_conf_matrix(cfg, targets, predictions, save_dir, png_prefix):
+    """Plot confusion matrix and other metrics for segmentation results"""
+    # Convert to DataFrame using your function
+    df = _data_to_df(targets, predictions)
+
+    # Get class list from config
+    class_names = cfg.dataset.classes
+
+    # Plot normalized confusion matrix
+    print("Generating normalized confusion matrix...")
+    fig, cm_norm = _plot_confusion_matrix_from_df(
+        df,
+        class_names=class_names,
+        normalize=True,
+        title="Normalized Segmentation Confusion Matrix",
+    )
+
+    # Save plot to png
+    save_path = os.path.join(save_dir, f"{png_prefix}.png")
+    fig.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.show()
+
+    # Print classification report
+    target_names = class_names if class_names else None
+
+    print("\nClassification Report:")
+    print(
+        classification_report(
+            df["actual"], df["predicted"], target_names=target_names
+        )
+    )
+
+
+def plot_results_variable(cfg, targets, predictions, save_dir, png_prefix):
+    task = _get_task(cfg)
+
+    # Scatter plots for class./regress. tasks
+    if "classification" in task or "regression" in task:
+        return _plot_results_scatter(
+            cfg, targets, predictions, save_dir, png_prefix
+        )
+    # Conf. matrix for seg. tasks
+    elif task == "segmentation":
+        return _plot_results_conf_matrix(
+            cfg, targets, predictions, save_dir, png_prefix
+        )
+    elif "knn" in task:
+        pass
+    elif "change_detection" in task:
+        pass

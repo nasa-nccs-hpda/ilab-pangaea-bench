@@ -31,3 +31,4 @@ dependencies:
   - ipykernel
   - nb_conda_kernels
   - torchmetrics
+  - seaborn

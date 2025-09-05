@@ -503,7 +503,7 @@ def _plot_confusion_matrix_from_df(
         fmt = "d"
 
     # Create figure
-    plt.figure(figsize=figsize)
+    fig = plt.figure(figsize=figsize)
 
     # Create heatmap
     sns.heatmap(
@@ -527,21 +527,49 @@ def _plot_confusion_matrix_from_df(
     return fig, cm
 
 
+def shorten_labels(class_names, max_length=10):
+    """Create shortened versions of class names with a lookup dictionary"""
+    shortened = {}
+    for i, name in enumerate(class_names):
+        if len(name) > max_length:
+            short_name = f"{name[:max_length-3]}..."  # Truncate with ellipsis
+            # Or use initials: ''.join(w[0] for w in name.split())
+            shortened[short_name] = name
+        else:
+            shortened[name] = name
+
+    # Create mapping for display
+    display_names = list(shortened.keys())
+
+    # Print the legend
+    print("Class Name Legend:")
+    for short, full in shortened.items():
+        if short != full:
+            print(f"  {short} → {full}")
+
+    return display_names, shortened
+
+
 def _plot_results_conf_matrix(cfg, targets, predictions, save_dir, png_prefix):
     """Plot confusion matrix and other metrics for segmentation results"""
     # Convert to DataFrame using your function
     df = _data_to_df(targets, predictions)
 
-    # Get class list from config
+    # Get class list from config, shorten them
     class_names = cfg.dataset.classes
+    short_names, name_mapping = shorten_labels(class_names, max_length=12)
 
     # Plot normalized confusion matrix
     print("Generating normalized confusion matrix...")
     fig, cm_norm = _plot_confusion_matrix_from_df(
         df,
-        class_names=class_names,
+        class_names=short_names,
         normalize=True,
         title="Normalized Segmentation Confusion Matrix",
+    )
+    # Add legend and helper text
+    plt.figtext(
+        0.5, 0.01, "* See legend in log output", ha="center", fontsize=10
     )
 
     # Save plot to png

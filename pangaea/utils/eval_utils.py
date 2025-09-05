@@ -237,7 +237,6 @@ def _get_metric(preds, targets, cfg, task, test_dict, device):
 def test_loop(cfg, model, device, test_loader, logger):
     # Extract task from cfg so we can predict accurately
     task = _get_task(cfg)
-    print(f"task: {task}")
 
     # Track values of evaluation
     test_dict = {
@@ -544,8 +543,7 @@ def shorten_labels(class_names, max_length=10):
     # Print the legend
     print("Class Name Legend:")
     for short, full in shortened.items():
-        if short != full:
-            print(f"  {short} → {full}")
+        print(f"  {short} → {full}")
 
     return display_names, shortened
 
@@ -568,9 +566,7 @@ def _plot_results_conf_matrix(cfg, targets, predictions, save_dir, png_prefix):
         title="Normalized Segmentation Confusion Matrix",
     )
     # Add legend and helper text
-    plt.figtext(
-        0.5, 0.01, "* See legend in log output", ha="center", fontsize=10
-    )
+    plt.xlabel("Predicted Label\n* See legend in log output", fontsize=12)
 
     # Save plot to png
     save_path = os.path.join(save_dir, f"{png_prefix}.png")
@@ -586,6 +582,8 @@ def _plot_results_conf_matrix(cfg, targets, predictions, save_dir, png_prefix):
             df["actual"], df["predicted"], target_names=target_names
         )
     )
+
+    return fig, df
 
 
 def plot_results_variable(cfg, targets, predictions, save_dir, png_prefix):

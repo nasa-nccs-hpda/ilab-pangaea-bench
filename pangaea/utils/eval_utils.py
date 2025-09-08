@@ -389,6 +389,7 @@ def plot_results_heatmap_2(cfg, targets, preds, images, save_dir, png_prefix):
 
     # Process RGB samples, retrieve pred samples
     batch_images = np.flip(images[:num_samples, :3, :, :])
+    print(batch_images.shape)
     batch_images = np.transpose(batch_images, (1, 2, 0))
     batch_preds = preds[:num_samples]
     batch_size = batch_images.shape[0]

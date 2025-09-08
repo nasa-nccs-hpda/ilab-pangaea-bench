@@ -18,19 +18,6 @@ from sklearn.metrics import confusion_matrix, classification_report
 def config_cuda(
     cfg, backend="nccl", master_addr="localhost", master_port="12355"
 ):
-    """
-    Configure CUDA resources for distributed PyTorch training.
-
-    Args:
-        cfg: Configuration object containing model parameters
-        logger: Logger instance for outputting information
-        backend: Distributed backend ('nccl' for GPU, 'gloo' for CPU)
-        master_addr: Master node address for coordination
-        master_port: Master node port for coordination
-
-    Returns:
-        tuple: (device, local_rank, world_size)
-    """
 
     # Check if CUDA is available
     assert torch.cuda.is_available(), "CUDA is not available on this system."
@@ -242,6 +229,7 @@ def test_loop(cfg, model, device, test_loader, logger):
     test_dict = {
         "targets": [],
         "preds": [],
+        "images": [],
         "metric": {"name": _get_task_metric(task), "value": 0.0},
     }
 
@@ -251,6 +239,7 @@ def test_loop(cfg, model, device, test_loader, logger):
             # Load all modalities of image (each is its own dict within image)
             images, targets = data["image"], data["target"]
             images = {k: v.to(device) for k, v in images.items()}
+            print(images)
             targets = targets.to(device)
 
             # Model prediction processing depends on task
@@ -261,6 +250,7 @@ def test_loop(cfg, model, device, test_loader, logger):
             images = {k: v.cpu().numpy() for k, v in images.items()}
             test_dict["targets"].append(targets.cpu().numpy())
             test_dict["preds"].append(preds.cpu().numpy())
+            # test_dict["images"].append()
             test_dict["metric"]["value"] = _get_metric(
                 preds, targets, cfg, task, test_dict, device
             )

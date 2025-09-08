@@ -239,7 +239,6 @@ def test_loop(cfg, model, device, test_loader, logger):
             # Load all modalities of image (each is its own dict within image)
             images, targets = data["image"], data["target"]
             images = {k: v.to(device) for k, v in images.items()}
-            print(images)
             targets = targets.to(device)
 
             # Model prediction processing depends on task
@@ -250,7 +249,7 @@ def test_loop(cfg, model, device, test_loader, logger):
             images = {k: v.cpu().numpy() for k, v in images.items()}
             test_dict["targets"].append(targets.cpu().numpy())
             test_dict["preds"].append(preds.cpu().numpy())
-            # test_dict["images"].append()
+            test_dict["images"].append(images["optical"].cpu().numpy())
             test_dict["metric"]["value"] = _get_metric(
                 preds, targets, cfg, task, test_dict, device
             )
@@ -274,8 +273,9 @@ def test_loop(cfg, model, device, test_loader, logger):
         f"metric {metric_name} average over all eval samples: {metric_value}"
     )
 
-    for key in ["targets", "preds"]:
+    for key in ["targets", "preds", "images"]:
         test_dict[key] = np.concatenate(test_dict[key], axis=0)
+        print(f"{key} shape: {test_dict[key].shape}")
 
     return test_dict
 

@@ -367,7 +367,7 @@ def plot_results_heatmap(cfg, targets, preds, images, save_dir, png_prefix):
     return fig
 
 
-def minmax_norm(image):
+def _minmax_norm(image):
     """Normalize a 3D numpy array (image) using min-max normalization."""
     # Assume image is (H, W, C)
     norm = np.zeros_like(image, dtype=np.float32)
@@ -381,6 +381,30 @@ def minmax_norm(image):
             norm[:, :, c] = (channel - channel_min) / channel_range
 
     return norm
+
+
+def _stretch_norm(image):
+    # Normalize for visualization using percentile stretching
+    normalized_image = np.zeros_like(image, dtype=float)
+
+    for band_idx in range(image.shape[2]):
+        band_data = image[:, :, band_idx].astype(float)
+        # Use percentile stretch to exclude bottom and upper 2% of data range
+        p2, p98 = np.percentile(band_data, (2, 98))
+        if p98 > p2:  # Avoid division by zero
+            normalized_image[:, :, band_idx] = np.clip(
+                (band_data - p2) / (p98 - p2), 0, 1
+            )
+        else:
+            normalized_image[:, :, band_idx] = 0
+
+    return normalized_image
+
+
+def _normalize_rgb(image):
+    min_maxed = _minmax_norm(image)
+    stretched = _stretch_norm(min_maxed)
+    return stretched
 
 
 def _apply_discrete_colormap(ax, data, cmap, cfg, fig, colorbar_kwargs=None):
@@ -460,7 +484,7 @@ def plot_results_heatmap_2(cfg, targets, preds, images, save_dir, png_prefix):
     for j in range(batch_size):
         # Top row: Inputs
         ax = axes[0, j]
-        ax.imshow(minmax_norm(batch_images[j]))
+        ax.imshow(_normalize_rgb(batch_images[j]))
         ax.set_title("RGB Input")
         ax.axis("off")
 

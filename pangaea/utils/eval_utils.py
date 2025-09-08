@@ -383,6 +383,48 @@ def minmax_norm(image):
     return norm
 
 
+def _apply_discrete_colormap(ax, data, cmap, cfg, fig, colorbar_kwargs=None):
+    """
+    Apply discrete colormap and colorbar for segmentation data.
+
+    Args:
+        ax: matplotlib axis object
+        data: image data to display
+        cmap: colormap name
+        cfg: configuration object with dataset.num_classes
+        fig: matplotlib figure object
+        colorbar_kwargs: additional kwargs for colorbar
+
+    Returns:
+        im: image object created by imshow
+    """
+    if colorbar_kwargs is None:
+        colorbar_kwargs = {}
+
+    cmap_obj = plt.get_cmap(cmap)
+    num_classes = cfg.dataset.num_classes
+    bounds = np.arange(
+        -0.5, num_classes + 0.5, 1
+    )  # Boundaries between classes
+    norm = plt.matplotlib.colors.BoundaryNorm(bounds, cmap_obj.N)
+
+    # Create image with the norm already applied
+    im = ax.imshow(data, cmap=cmap, norm=norm)
+
+    # Add colorbar with centered ticks
+    default_colorbar_kwargs = {
+        "ticks": range(num_classes),
+        "fraction": 0.046,
+        "pad": 0.04,
+    }
+    default_colorbar_kwargs.update(colorbar_kwargs)
+
+    cbar = fig.colorbar(im, ax=ax, **default_colorbar_kwargs)
+    cbar.set_label("Class")
+
+    return im
+
+
 def plot_results_heatmap_2(cfg, targets, preds, images, save_dir, png_prefix):
     # Make targets and preds 3D tensors if they are not
     if targets.ndim > 3:  # B, H, W
@@ -414,6 +456,7 @@ def plot_results_heatmap_2(cfg, targets, preds, images, save_dir, png_prefix):
 
     if ncols == 1:  # Handle case of single pair (ncols=1)
         axes = axes.reshape(2, 1)
+    # Your main plotting code becomes:
     for j in range(batch_size):
         # Top row: Inputs
         ax = axes[0, j]
@@ -423,39 +466,24 @@ def plot_results_heatmap_2(cfg, targets, preds, images, save_dir, png_prefix):
 
         # Bottom row: preds
         ax = axes[1, j]
-        ax.imshow(batch_preds[j], cmap=cmap)
-        ax.set_title("Prediction")
-        ax.axis("off")
-        fig.colorbar(
-            ax.images[0],
-            ax=ax,
-            orientation="vertical",
-            fraction=0.046,
-            pad=0.04,
-        )
 
-        # Update colorbar to display properly
         if is_discrete:
-            cmap_obj = plt.get_cmap(cmap)
-            # Create a normalized colormap with discrete boundaries
-            num_classes = cfg.dataset.num_classes
-            bounds = np.arange(
-                -0.5, num_classes + 0.5, 1
-            )  # Boundaries between classes
-            norm = plt.matplotlib.colors.BoundaryNorm(bounds, cmap_obj.N)
+            im = _apply_discrete_colormap(ax, batch_preds[j], cmap, cfg, fig)
+        else:
+            # For continuous predictions (non-discrete case)
+            im = ax.imshow(batch_preds[j], cmap=cmap)
 
-            # Update the image with the discrete mapping
-            ax.set_norm(norm)
-
-            # Optional: Add a colorbar with centered ticks
-            cbar = fig.colorbar(
-                ax.images[0],
+            # Standard colorbar
+            fig.colorbar(
+                im,
                 ax=ax,
-                ticks=range(num_classes),
+                orientation="vertical",
                 fraction=0.046,
                 pad=0.04,
             )
-            cbar.set_label("Class")
+
+        ax.set_title("Prediction")
+        ax.axis("off")
 
     plt.tight_layout()
     save_path = os.path.join(save_dir, f"{png_prefix}.png")

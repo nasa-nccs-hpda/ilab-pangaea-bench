@@ -383,9 +383,9 @@ def plot_results_heatmap_2(cfg, targets, preds, images, save_dir, png_prefix):
     cmap, is_discrete = _get_cmap_from_task(cfg)
 
     # Normalize colormaps to show accurate data ranges
-    all_data = np.concatenate([images, preds])
-    vmin, vmax = all_data.min(), all_data.max()
-    norm = Normalize(vmin=vmin, vmax=vmax)
+    # all_data = np.concatenate([images, preds])
+    # vmin, vmax = all_data.min(), all_data.max()
+    # norm = Normalize(vmin=vmin, vmax=vmax)
 
     # Take a number of samples equal to our num_samples value
     batch_images = targets[:num_samples, :3, :, :]
@@ -401,13 +401,13 @@ def plot_results_heatmap_2(cfg, targets, preds, images, save_dir, png_prefix):
     for j in range(batch_size):
         # Top row: Inputs
         ax = axes[0, j]
-        ax.imshow(batch_images[j], norm=norm)
+        ax.imshow(batch_images[j])
         ax.set_title("RGB Input")
         ax.axis("off")
 
         # Bottom row: preds
         ax = axes[1, j]
-        ax.imshow(batch_preds[j], cmap=cmap, norm=norm)
+        ax.imshow(batch_preds[j], cmap=cmap)
         ax.set_title("Prediction")
         ax.axis("off")
         fig.colorbar(
@@ -418,6 +418,7 @@ def plot_results_heatmap_2(cfg, targets, preds, images, save_dir, png_prefix):
             pad=0.04,
         )
 
+        # Update colorbar to display properly
         if is_discrete:
             cmap_obj = plt.get_cmap(cmap)
             # Create a normalized colormap with discrete boundaries

@@ -283,36 +283,42 @@ def test_loop(cfg, model, device, test_loader, logger):
 def _get_cmap_from_task(cfg):
     task = _get_task(cfg)
     cmap = "viridis"
+    is_discrete = False
+
     # Discrete cmaps for class/seg
     if task == "classification" or task == "segmentation":
+        is_discrete = True
         if (cfg.dataset.num_classes > 10) and (cfg.dataset.num_classes < 20):
             cmap = "tab20b"
         elif cfg.dataset.num_classes <= 10:
             cmap = "tab10"
         else:
             warnings.warn(
-                ">20 classes detected for seg/class task."
+                ">20 classes detected for seg/class task. "
                 "Using viridis colormap."
             )
     elif task == "change_detection":
         cmap = "RdBu_r"
     elif task in ["knn_probe", "knn_probe_multi_label"]:
         cmap = "YlGnBu"  # Yellow-Green-Blue, good for distances/probabilities
-    return cmap
+
+    return cmap, is_discrete
 
 
-def plot_results_heatmap(cfg, targets, preds, save_dir, png_prefix):
+def plot_results_heatmap(cfg, targets, preds, images, save_dir, png_prefix):
     # Make targets and preds 3D tensors if they are not
-    if targets.ndim > 3:
+    if targets.ndim > 3:  # B, H, W
         targets = np.squeeze(targets, axis=0)
-    if preds.ndim > 3:
+    if preds.ndim > 3:  # B, H, W
         preds = np.squeeze(preds, axis=0)
+    if images.ndim > 4:  # B, C, H, W
+        images = np.squeeze(images, axis=2)
 
     # Plot 5 samples by default
     num_samples = 5
 
     # Get task from config to inform color choices
-    cmap = _get_cmap_from_task(cfg)
+    cmap, is_discrete = _get_cmap_from_task(cfg)
 
     # Normalize colormaps to show accurate data ranges
     all_data = np.concatenate([targets, preds])
@@ -356,7 +362,86 @@ def plot_results_heatmap(cfg, targets, preds, save_dir, png_prefix):
         )
 
     plt.tight_layout()
-    save_path = os.path.join(save_dir, "targets_preds_heatmap.png")
+    save_path = os.path.join(save_dir, f"{png_prefix}.png")
+    plt.savefig(save_path)
+    return fig
+
+
+def plot_results_heatmap_2(cfg, targets, preds, images, save_dir, png_prefix):
+    # Make targets and preds 3D tensors if they are not
+    if targets.ndim > 3:  # B, H, W
+        targets = np.squeeze(targets, axis=0)
+    if preds.ndim > 3:  # B, H, W
+        preds = np.squeeze(preds, axis=0)
+    if images.ndim > 4:  # B, C, H, W
+        images = np.squeeze(images, axis=2)
+
+    # Plot 5 samples by default
+    num_samples = 5
+
+    # Get task from config to inform color choices
+    cmap, is_discrete = _get_cmap_from_task(cfg)
+
+    # Normalize colormaps to show accurate data ranges
+    all_data = np.concatenate([images, preds])
+    vmin, vmax = all_data.min(), all_data.max()
+    norm = Normalize(vmin=vmin, vmax=vmax)
+
+    # Take a number of samples equal to our num_samples value
+    batch_images = targets[:num_samples, :3, :, :]
+    batch_images = np.flip(batch_images, axis=1)  # Create RGB order
+    batch_preds = preds[:num_samples]
+    batch_size = batch_images.shape[0]
+    nrows, ncols = (2, batch_size)  # tuple of rows and columns
+
+    fig, axes = plt.subplots(nrows, ncols, figsize=(3 * ncols, 6))
+
+    if ncols == 1:  # Handle case of single pair (ncols=1)
+        axes = axes.reshape(2, 1)
+    for j in range(batch_size):
+        # Top row: Inputs
+        ax = axes[0, j]
+        ax.imshow(batch_images[j], norm=norm)
+        ax.set_title("RGB Input")
+        ax.axis("off")
+
+        # Bottom row: preds
+        ax = axes[1, j]
+        ax.imshow(batch_preds[j], cmap=cmap, norm=norm)
+        ax.set_title("Prediction")
+        ax.axis("off")
+        fig.colorbar(
+            ax.images[0],
+            ax=ax,
+            orientation="vertical",
+            fraction=0.046,
+            pad=0.04,
+        )
+
+        if is_discrete:
+            cmap_obj = plt.get_cmap(cmap)
+            # Create a normalized colormap with discrete boundaries
+            num_classes = cfg.dataset.num_classes
+            bounds = np.arange(
+                -0.5, num_classes + 0.5, 1
+            )  # Boundaries between classes
+            norm = plt.matplotlib.colors.BoundaryNorm(bounds, cmap_obj.N)
+
+            # Update the image with the discrete mapping
+            ax.set_norm(norm)
+
+            # Optional: Add a colorbar with centered ticks
+            cbar = fig.colorbar(
+                ax.images[0],
+                ax=ax,
+                ticks=range(num_classes),
+                fraction=0.046,
+                pad=0.04,
+            )
+            cbar.set_label("Class")
+
+    plt.tight_layout()
+    save_path = os.path.join(save_dir, f"{png_prefix}.png")
     plt.savefig(save_path)
     return fig
 

@@ -249,7 +249,7 @@ def test_loop(cfg, model, device, test_loader, logger):
             images = {k: v.cpu().numpy() for k, v in images.items()}
             test_dict["targets"].append(targets.cpu().numpy())
             test_dict["preds"].append(preds.cpu().numpy())
-            test_dict["images"].append(images["optical"].cpu().numpy())
+            test_dict["images"].append(images["optical"])
             test_dict["metric"]["value"] = _get_metric(
                 preds, targets, cfg, task, test_dict, device
             )

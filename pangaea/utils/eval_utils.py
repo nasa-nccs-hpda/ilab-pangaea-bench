@@ -388,7 +388,7 @@ def plot_results_heatmap_2(cfg, targets, preds, images, save_dir, png_prefix):
     # norm = Normalize(vmin=vmin, vmax=vmax)
 
     # Take a number of samples equal to our num_samples value
-    batch_images = targets[:num_samples, :3, :, :]
+    batch_images = images[:num_samples, :3, :, :]
     batch_images = np.flip(batch_images, axis=1)  # Create RGB order
     batch_preds = preds[:num_samples]
     batch_size = batch_images.shape[0]

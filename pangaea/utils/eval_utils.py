@@ -367,6 +367,22 @@ def plot_results_heatmap(cfg, targets, preds, images, save_dir, png_prefix):
     return fig
 
 
+def minmax_norm(image):
+    """Normalize a 3D numpy array (image) using min-max normalization."""
+    # Assume image is (H, W, C)
+    norm = np.zeros_like(image, dtype=np.float32)
+
+    for c in range(image.shape[2]):
+        channel = image[:, :, c]
+        channel_min, channel_max = np.min(channel), np.max(channel)
+
+        if channel_max > channel_min:
+            channel_range = channel_max - channel_min
+            norm[:, :, c] = (channel - channel_min) / channel_range
+
+    return norm
+
+
 def plot_results_heatmap_2(cfg, targets, preds, images, save_dir, png_prefix):
     # Make targets and preds 3D tensors if they are not
     if targets.ndim > 3:  # B, H, W
@@ -389,8 +405,7 @@ def plot_results_heatmap_2(cfg, targets, preds, images, save_dir, png_prefix):
 
     # Process RGB samples, retrieve pred samples
     batch_images = np.flip(images[:num_samples, :3, :, :])
-    print(batch_images.shape)
-    batch_images = np.transpose(batch_images, (1, 2, 0))
+    batch_images = np.transpose(batch_images, (0, 2, 3, 1))
     batch_preds = preds[:num_samples]
     batch_size = batch_images.shape[0]
     nrows, ncols = (2, batch_size)  # tuple of rows and columns
@@ -402,7 +417,7 @@ def plot_results_heatmap_2(cfg, targets, preds, images, save_dir, png_prefix):
     for j in range(batch_size):
         # Top row: Inputs
         ax = axes[0, j]
-        ax.imshow(batch_images[j])
+        ax.imshow(minmax_norm(batch_images[j]))
         ax.set_title("RGB Input")
         ax.axis("off")
 

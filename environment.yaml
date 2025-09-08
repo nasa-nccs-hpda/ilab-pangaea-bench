@@ -1,7 +1,13 @@
 name: pangaea-bench
 channels:
+  - pytorch
+  - nvidia
   - conda-forge
+  - nodefaults
 dependencies:
+  - python=3.10
+  - numpy[version='>=1.21,<2.0']
+  - pytorch>=2.1
   - einops
   - fastai::opencv-python-headless
   - gdown
@@ -14,9 +20,7 @@ dependencies:
   - ptflops
   - pydataverse
   - pytest
-  - python=3.10
   - pytorch-cuda=11.8
-  - pytorch[version='>=2.1']
   - rasterio
   - rioxarray
   - scikit-learn

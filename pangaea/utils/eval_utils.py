@@ -554,14 +554,13 @@ def _plot_results_conf_matrix(cfg, targets, predictions, save_dir, png_prefix):
     df = _data_to_df(targets, predictions)
 
     # Get class list from config, shorten them
-    class_names = cfg.dataset.classes
-    short_names, name_mapping = shorten_labels(class_names, max_length=12)
+    class_names = [f"Class {i+1}" for i in range(cfg.dataset.num_classes)]
 
     # Plot normalized confusion matrix
     print("Generating normalized confusion matrix...")
     fig, cm_norm = _plot_confusion_matrix_from_df(
         df,
-        class_names=short_names,
+        class_names=class_names,
         normalize=True,
         title="Normalized Segmentation Confusion Matrix",
     )

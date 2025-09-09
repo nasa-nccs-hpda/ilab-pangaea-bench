@@ -7,6 +7,7 @@ import torch
 import torch.distributed as dist
 import torch.nn.functional as F
 from matplotlib.colors import Normalize
+from matplotlib.colors import ListedColormap, BoundaryNorm
 from sklearn.metrics import f1_score
 from torchmetrics.classification import JaccardIndex
 from tqdm import tqdm
@@ -303,7 +304,8 @@ def _get_cmap_from_task(cfg):
     return cmap, is_discrete
 
 
-def plot_results_heatmap(cfg, targets, preds, images, save_dir, png_prefix):
+def _prepare_tensor_data(targets, preds, images):
+    """Prepare tensor data by removing extra dimensions."""
     # Make targets and preds 3D tensors if they are not
     if targets.ndim > 3:  # B, H, W
         targets = np.squeeze(targets, axis=0)
@@ -312,53 +314,115 @@ def plot_results_heatmap(cfg, targets, preds, images, save_dir, png_prefix):
     if images.ndim > 4:  # B, C, H, W
         images = np.squeeze(images, axis=2)
 
-    # Plot 5 samples by default
-    num_samples = 5
+    return targets, preds, images
 
-    # Get task from config to inform color choices
-    cmap, is_discrete = _get_cmap_from_task(cfg)
 
-    # Normalize colormaps to show accurate data ranges
+def _get_discrete_cmap(n_classes, cmap_name):
+    base_cmap = plt.cm.get_cmap(cmap_name)
+    # Always use the same color indices for the same class values
+    # This ensures class 0 always gets color 0, class 1 gets color 1, etc.
+    colors = []
+    for i, class_val in enumerate(range(n_classes)):
+        # Map colors to indices based on n_classes
+        color_idx = int(class_val) % base_cmap.N
+        colors.append(base_cmap(color_idx))
+
+    return ListedColormap(colors)
+
+
+def _setup_discrete_colormap_and_norm(cfg, targets, preds, base_cmap):
+    """Setup colormap and normalization for discrete classification data."""
+    n_classes = cfg.dataset.num_classes
+
+    # Use the discrete colormap function
+    cmap = _get_discrete_cmap(n_classes, base_cmap)
+
+    # Get unique classes for mapping
+    unique_classes = np.sort(np.unique(np.concatenate([targets, preds])))
+
+    # Map class values to sequential positions for BoundaryNorm
+    class_to_position = {cls: i for i, cls in enumerate(unique_classes)}
+    targets_viz = np.vectorize(class_to_position.get)(targets)
+    preds_viz = np.vectorize(class_to_position.get)(preds)
+
+    # Create discrete normalization
+    boundaries = np.arange(n_classes + 1) - 0.5
+    norm = BoundaryNorm(boundaries, ncolors=n_classes)
+
+    return cmap, norm, targets_viz, preds_viz
+
+
+def _setup_continuous_colormap_and_norm(targets, preds, base_cmap):
+    """Setup colormap and normalization for continuous data."""
+    # For continuous data, use original normalization
     all_data = np.concatenate([targets, preds])
     vmin, vmax = all_data.min(), all_data.max()
     norm = Normalize(vmin=vmin, vmax=vmax)
 
-    # Take a number of samples equal to our num_samples value
-    batch_targets = targets[:num_samples]
-    batch_preds = preds[:num_samples]
-    batch_size = batch_targets.shape[0]
-    nrows, ncols = (2, batch_size)  # tuple of rows and columns
+    return base_cmap, norm, targets, preds
 
+
+def _create_heatmap_subplot(ax, data, cmap, norm, title):
+    """Create a single heatmap subplot with colorbar."""
+    ax.imshow(data, cmap=cmap, norm=norm)
+    ax.set_title(title)
+    ax.axis("off")
+    fig = ax.get_figure()
+    fig.colorbar(
+        ax.images[0],
+        ax=ax,
+        orientation="vertical",
+        fraction=0.046,
+        pad=0.04,
+    )
+
+
+def plot_results_heatmap(cfg, targets, preds, images, save_dir, png_prefix):
+    """Plot heatmap comparison of targets vs predictions."""
+    # Prepare tensor data
+    targets, preds, images = _prepare_tensor_data(targets, preds, images)
+
+    # Plot 5 samples by default
+    num_samples = 5
+
+    # Get task from config to inform color choices
+    base_cmap, is_discrete = _get_cmap_from_task(cfg)
+
+    # Setup colormap and normalization based on data type
+    if is_discrete:
+        cmap, norm, targets_viz, preds_viz = _setup_discrete_colormap_and_norm(
+            cfg, targets, preds, base_cmap
+        )
+    else:
+        cmap, norm, targets_viz, preds_viz = (
+            _setup_continuous_colormap_and_norm(targets, preds, base_cmap)
+        )
+
+    # Prepare batch data
+    batch_targets = targets_viz[:num_samples]
+    batch_preds = preds_viz[:num_samples]
+    batch_size = batch_targets.shape[0]
+    nrows, ncols = (2, batch_size)
+
+    # Create subplots
     fig, axes = plt.subplots(nrows, ncols, figsize=(3 * ncols, 6))
 
     if ncols == 1:  # Handle case of single pair (ncols=1)
         axes = axes.reshape(2, 1)
+
+    # Create heatmaps
     for j in range(batch_size):
         # Top row: Targets
-        ax = axes[0, j]
-        ax.imshow(batch_targets[j], cmap=cmap, norm=norm)
-        ax.set_title("Target")
-        ax.axis("off")
-        fig.colorbar(
-            ax.images[0],
-            ax=ax,
-            orientation="vertical",
-            fraction=0.046,
-            pad=0.04,
-        )
-        # Bottom row: preds
-        ax = axes[1, j]
-        ax.imshow(batch_preds[j], cmap=cmap, norm=norm)
-        ax.set_title("Prediction")
-        ax.axis("off")
-        fig.colorbar(
-            ax.images[0],
-            ax=ax,
-            orientation="vertical",
-            fraction=0.046,
-            pad=0.04,
+        _create_heatmap_subplot(
+            axes[0, j], batch_targets[j], cmap, norm, "Target"
         )
 
+        # Bottom row: Predictions
+        _create_heatmap_subplot(
+            axes[1, j], batch_preds[j], cmap, norm, "Prediction"
+        )
+
+    # Finalize and save
     plt.tight_layout()
     save_path = os.path.join(save_dir, f"{png_prefix}.png")
     plt.savefig(save_path)

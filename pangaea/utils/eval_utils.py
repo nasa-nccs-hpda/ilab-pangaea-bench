@@ -199,8 +199,6 @@ def _get_metric(preds, targets, cfg, task, test_dict, device):
     metric_name = test_dict["metric"]["name"]
     metric_value = test_dict["metric"]["value"]
 
-    # Debugging
-    print(f"preds, targets devices: {preds.device, targets.device}")
     if metric_name == "mse":  # Regression
         metric_value += F.mse_loss(preds, targets)
     elif "IoU" in metric_name:  # Segmentation

@@ -770,31 +770,63 @@ def shorten_labels(class_names, max_length=10):
 
 def _plot_results_conf_matrix(cfg, targets, predictions, save_dir, png_prefix):
     """Plot confusion matrix and other metrics for segmentation results"""
+
     # Convert to DataFrame using your function
     df = _data_to_df(targets, predictions)
 
     # Get class list from config, shorten them
     class_names = [f"Class {i+1}" for i in range(cfg.dataset.num_classes)]
 
-    # Plot normalized confusion matrix
+    # Performance optimization: Use non-interactive backend for faster rendering
+    plt.ioff()  # Turn off interactive mode
+
     print("Generating normalized confusion matrix...")
+
+    # Create figure with optimized settings
     fig, cm_norm = _plot_confusion_matrix_from_df(
         df,
         class_names=class_names,
         normalize=True,
         title="Normalized Segmentation Confusion Matrix",
     )
-    # Add legend and helper text
-    plt.xlabel("Predicted Label\n* See legend in log output", fontsize=12)
 
-    # Save plot to png
+    # Optimize text spacing and layout
+    plt.gca()
+
+    # Better spacing for axis labels
+    plt.xlabel("Predicted Label", fontsize=10, labelpad=15)
+    plt.ylabel("True Label", fontsize=10, labelpad=15)
+
+    # Rotate x-axis labels if many classes to prevent overlap
+    if len(class_names) > 5:
+        plt.xticks(rotation=45, ha="right")
+
+    # Add note as a separate text box instead of in xlabel
+    fig.text(
+        0.5,
+        0.02,
+        "* See legend in log output",
+        ha="center",
+        fontsize=9,
+        style="italic",
+    )
+
+    # Adjust layout to prevent clipping
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.15)  # Make room for the note
+
+    # Performance optimization: Save without showing first
     save_path = os.path.join(save_dir, f"{png_prefix}.png")
-    fig.savefig(save_path, dpi=300, bbox_inches="tight")
-    plt.show()
+    fig.savefig(
+        save_path,
+        dpi=200,
+        bbox_inches="tight",
+        facecolor="white",
+        edgecolor="none",
+    )
 
-    # Print classification report
+    # Print classification report (this is fast, keep as-is)
     target_names = class_names if class_names else None
-
     print("\nClassification Report:")
     print(
         classification_report(

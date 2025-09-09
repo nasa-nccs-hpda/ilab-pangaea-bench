@@ -345,11 +345,11 @@ def _setup_discrete_colormap_and_norm(cfg, targets, preds, base_cmap):
     targets_viz = np.vectorize(class_to_position.get)(targets)
     preds_viz = np.vectorize(class_to_position.get)(preds)
 
-    # Create discrete normalization
+    # Create discrete normalization with boundaries between classes
     boundaries = np.arange(n_classes + 1) - 0.5
     norm = BoundaryNorm(boundaries, ncolors=n_classes)
 
-    return cmap, norm, targets_viz, preds_viz
+    return cmap, norm, targets_viz, preds_viz, unique_classes
 
 
 def _setup_continuous_colormap_and_norm(targets, preds, base_cmap):
@@ -362,19 +362,27 @@ def _setup_continuous_colormap_and_norm(targets, preds, base_cmap):
     return base_cmap, norm, targets, preds
 
 
-def _create_heatmap_subplot(ax, data, cmap, norm, title):
+def _create_heatmap_subplot(ax, data, cmap, norm, title, unique_classes=None):
     """Create a single heatmap subplot with colorbar."""
-    ax.imshow(data, cmap=cmap, norm=norm)
+    im = ax.imshow(data, cmap=cmap, norm=norm)
     ax.set_title(title)
     ax.axis("off")
+
     fig = ax.get_figure()
-    fig.colorbar(
-        ax.images[0],
+    cbar = fig.colorbar(
+        im,
         ax=ax,
         orientation="vertical",
         fraction=0.046,
         pad=0.04,
     )
+
+    # For discrete data, set colorbar ticks to show class labels
+    if unique_classes is not None:
+        # Set ticks at the center of each color segment
+        tick_positions = np.arange(len(unique_classes))
+        cbar.set_ticks(tick_positions)
+        cbar.set_ticklabels(unique_classes)
 
 
 def plot_results_heatmap(cfg, targets, preds, images, save_dir, png_prefix):
@@ -390,13 +398,14 @@ def plot_results_heatmap(cfg, targets, preds, images, save_dir, png_prefix):
 
     # Setup colormap and normalization based on data type
     if is_discrete:
-        cmap, norm, targets_viz, preds_viz = _setup_discrete_colormap_and_norm(
-            cfg, targets, preds, base_cmap
+        cmap, norm, targets_viz, preds_viz, unique_classes = (
+            _setup_discrete_colormap_and_norm(cfg, targets, preds, base_cmap)
         )
     else:
         cmap, norm, targets_viz, preds_viz = (
             _setup_continuous_colormap_and_norm(targets, preds, base_cmap)
         )
+        unique_classes = None
 
     # Prepare batch data
     batch_targets = targets_viz[:num_samples]
@@ -414,12 +423,17 @@ def plot_results_heatmap(cfg, targets, preds, images, save_dir, png_prefix):
     for j in range(batch_size):
         # Top row: Targets
         _create_heatmap_subplot(
-            axes[0, j], batch_targets[j], cmap, norm, "Target"
+            axes[0, j], batch_targets[j], cmap, norm, "Target", unique_classes
         )
 
         # Bottom row: Predictions
         _create_heatmap_subplot(
-            axes[1, j], batch_preds[j], cmap, norm, "Prediction"
+            axes[1, j],
+            batch_preds[j],
+            cmap,
+            norm,
+            "Prediction",
+            unique_classes,
         )
 
     # Finalize and save

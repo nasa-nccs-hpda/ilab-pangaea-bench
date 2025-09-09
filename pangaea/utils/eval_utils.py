@@ -268,13 +268,10 @@ def test_loop(cfg, model, device, test_loader, logger):
     test_dict["metric"]["value"] = metric_value.item()
 
     # Log average metric
-    logger.info(
-        f"metric {metric_name} average over all eval samples: {metric_value}"
-    )
+    logger.info(f"{metric_name} average over all eval samples: {metric_value}")
 
     for key in ["targets", "preds", "images"]:
         test_dict[key] = np.concatenate(test_dict[key], axis=0)
-        print(f"{key} shape: {test_dict[key].shape}")
 
     return test_dict
 
@@ -443,154 +440,6 @@ def plot_results_heatmap(cfg, targets, preds, images, save_dir, png_prefix):
     return fig
 
 
-def _minmax_norm(image):
-    """Normalize a 3D numpy array (image) using min-max normalization."""
-    # Assume image is (H, W, C)
-    norm = np.zeros_like(image, dtype=np.float32)
-
-    for c in range(image.shape[2]):
-        channel = image[:, :, c]
-        channel_min, channel_max = np.min(channel), np.max(channel)
-
-        if channel_max > channel_min:
-            channel_range = channel_max - channel_min
-            norm[:, :, c] = (channel - channel_min) / channel_range
-
-    return norm
-
-
-def _stretch_norm(image):
-    # Normalize for visualization using percentile stretching
-    normalized_image = np.zeros_like(image, dtype=float)
-
-    for band_idx in range(image.shape[2]):
-        band_data = image[:, :, band_idx].astype(float)
-        # Use percentile stretch to exclude bottom and upper 2% of data range
-        p2, p98 = np.percentile(band_data, (2, 98))
-        if p98 > p2:  # Avoid division by zero
-            normalized_image[:, :, band_idx] = np.clip(
-                (band_data - p2) / (p98 - p2), 0, 1
-            )
-        else:
-            normalized_image[:, :, band_idx] = 0
-
-    return normalized_image
-
-
-def _normalize_rgb(image):
-    min_maxed = _minmax_norm(image)
-    stretched = _stretch_norm(min_maxed)
-    return stretched
-
-
-def _apply_discrete_colormap(ax, data, cmap, cfg, fig, colorbar_kwargs=None):
-    """
-    Apply discrete colormap and colorbar for segmentation data.
-
-    Args:
-        ax: matplotlib axis object
-        data: image data to display
-        cmap: colormap name
-        cfg: configuration object with dataset.num_classes
-        fig: matplotlib figure object
-        colorbar_kwargs: additional kwargs for colorbar
-
-    Returns:
-        im: image object created by imshow
-    """
-    if colorbar_kwargs is None:
-        colorbar_kwargs = {}
-
-    cmap_obj = plt.get_cmap(cmap)
-    num_classes = cfg.dataset.num_classes
-    bounds = np.arange(
-        -0.5, num_classes + 0.5, 1
-    )  # Boundaries between classes
-    norm = plt.matplotlib.colors.BoundaryNorm(bounds, cmap_obj.N)
-
-    # Create image with the norm already applied
-    im = ax.imshow(data, cmap=cmap, norm=norm)
-
-    # Add colorbar with centered ticks
-    default_colorbar_kwargs = {
-        "ticks": range(num_classes),
-        "fraction": 0.046,
-        "pad": 0.04,
-    }
-    default_colorbar_kwargs.update(colorbar_kwargs)
-
-    cbar = fig.colorbar(im, ax=ax, **default_colorbar_kwargs)
-    cbar.set_label("Class")
-
-    return im
-
-
-def plot_results_heatmap_2(cfg, targets, preds, images, save_dir, png_prefix):
-    # Make targets and preds 3D tensors if they are not
-    if targets.ndim > 3:  # B, H, W
-        targets = np.squeeze(targets, axis=0)
-    if preds.ndim > 3:  # B, H, W
-        preds = np.squeeze(preds, axis=0)
-    if images.ndim > 4:  # B, C, H, W
-        images = np.squeeze(images, axis=2)
-
-    # Plot 5 samples by default
-    num_samples = 5
-
-    # Get task from config to inform color choices
-    cmap, is_discrete = _get_cmap_from_task(cfg)
-
-    # Normalize colormaps to show accurate data ranges
-    # all_data = np.concatenate([images, preds])
-    # vmin, vmax = all_data.min(), all_data.max()
-    # norm = Normalize(vmin=vmin, vmax=vmax)
-
-    # Process RGB samples, retrieve pred samples
-    batch_images = np.flip(images[:num_samples, :3, :, :])
-    batch_images = np.transpose(batch_images, (0, 2, 3, 1))
-    batch_preds = preds[:num_samples]
-    batch_size = batch_images.shape[0]
-    nrows, ncols = (2, batch_size)  # tuple of rows and columns
-
-    fig, axes = plt.subplots(nrows, ncols, figsize=(3 * ncols, 6))
-
-    if ncols == 1:  # Handle case of single pair (ncols=1)
-        axes = axes.reshape(2, 1)
-    # Your main plotting code becomes:
-    for j in range(batch_size):
-        # Top row: Inputs
-        ax = axes[0, j]
-        ax.imshow(_normalize_rgb(batch_images[j]))
-        ax.set_title("RGB Input")
-        ax.axis("off")
-
-        # Bottom row: preds
-        ax = axes[1, j]
-
-        if is_discrete:
-            im = _apply_discrete_colormap(ax, batch_preds[j], cmap, cfg, fig)
-        else:
-            # For continuous predictions (non-discrete case)
-            im = ax.imshow(batch_preds[j], cmap=cmap)
-
-            # Standard colorbar
-            fig.colorbar(
-                im,
-                ax=ax,
-                orientation="vertical",
-                fraction=0.046,
-                pad=0.04,
-            )
-
-        ax.set_title("Prediction")
-        ax.axis("off")
-
-    plt.tight_layout()
-    save_path = os.path.join(save_dir, f"{png_prefix}.png")
-    plt.savefig(save_path)
-    return fig
-
-
 def _data_to_df(targets, predictions):
     """Create Pandas DataFrame with flattened predictions."""
     # Convert to numpy arrays directly without list appending and concatenation
@@ -691,15 +540,7 @@ def _plot_confusion_matrix_from_df(
 ):
     """
     Plot confusion matrix using seaborn from a pandas DataFrame
-
-    Parameters:
-    df: pandas DataFrame with 'actual' and 'predicted' columns
-    class_names: list, names of classes (optional)
-    figsize: tuple, figure size
-    normalize: bool, whether to normalize the matrix
-    title: str, plot title
     """
-
     # Calculate confusion matrix from DataFrame
     cm = confusion_matrix(df["actual"], df["predicted"])
 
@@ -721,116 +562,118 @@ def _plot_confusion_matrix_from_df(
     else:
         fmt = "d"
 
-    # Create figure
-    fig = plt.figure(figsize=figsize)
+    # Create figure with optimized settings
+    fig, ax = plt.subplots(figsize=figsize)  # Use subplots instead of figure()
 
     # Create heatmap
     sns.heatmap(
         cm,
-        annot=True,  # Show numbers in cells
-        fmt=fmt,  # Number format
-        cmap="Blues",  # Color scheme
-        square=True,  # Square cells
-        linewidths=0.5,  # Grid lines
+        annot=True,
+        fmt=fmt,
+        cmap="Blues",
+        square=True,
+        linewidths=0.5,
         cbar_kws={"shrink": 0.8},
         xticklabels=class_names,
         yticklabels=class_names,
+        ax=ax,  # Specify the axis
     )
 
-    plt.title(title, fontsize=16, pad=20)
-    plt.ylabel("True Label", fontsize=12)
-    plt.xlabel("Predicted Label", fontsize=12)
-    plt.tight_layout()
+    # Set labels and title on the axis object
+    ax.set_title(title, fontsize=16, pad=20)
+    ax.set_ylabel("True Label", fontsize=12)
+    ax.set_xlabel("Predicted Label", fontsize=12)
 
-    # Return confusion matrix for further analysis if needed
     return fig, cm
-
-
-def shorten_labels(class_names, max_length=10):
-    """Create shortened versions of class names with a lookup dictionary"""
-    shortened = {}
-    for i, name in enumerate(class_names):
-        if len(name) > max_length:
-            short_name = f"{name[:max_length-3]}..."  # Truncate with ellipsis
-            # Or use initials: ''.join(w[0] for w in name.split())
-            shortened[short_name] = name
-        else:
-            shortened[name] = name
-
-    # Create mapping for display
-    display_names = list(shortened.keys())
-
-    # Print the legend
-    print("Class Name Legend:")
-    for short, full in shortened.items():
-        print(f"  {short} → {full}")
-
-    return display_names, shortened
 
 
 def _plot_results_conf_matrix(cfg, targets, predictions, save_dir, png_prefix):
     """Plot confusion matrix and other metrics for segmentation results"""
 
-    # Convert to DataFrame using your function
+    # Convert to DataFrame
     df = _data_to_df(targets, predictions)
 
-    # Get class list from config, shorten them
-    class_names = [f"Class {i+1}" for i in range(cfg.dataset.num_classes)]
+    # Sample large datasets for faster plotting
+    if len(df) > 100000:
+        print(
+            f"Dataset is large ({len(df)} samples), sampling 50k for visualization..."
+        )
+        df = df.sample(n=50000, random_state=42)
 
-    # Performance optimization: Use non-interactive backend for faster rendering
-    plt.ioff()  # Turn off interactive mode
+    # Get class list from config
+    class_names = [f"Class {i+1}" for i in range(cfg.dataset.num_classes)]
 
     print("Generating normalized confusion matrix...")
 
-    # Create figure with optimized settings
-    fig, cm_norm = _plot_confusion_matrix_from_df(
-        df,
-        class_names=class_names,
-        normalize=True,
-        title="Normalized Segmentation Confusion Matrix",
-    )
+    # Turn off interactive mode for performance
+    was_interactive = plt.isinteractive()
+    plt.ioff()
 
-    # Optimize text spacing and layout
-    plt.gca()
+    try:
+        # Create the confusion matrix plot
+        fig, cm_norm = _plot_confusion_matrix_from_df(
+            df,
+            class_names=class_names,
+            normalize=True,
+            title="Normalized Segmentation Confusion Matrix",
+            figsize=(
+                min(12, max(8, len(class_names) * 0.8)),
+                min(12, max(8, len(class_names) * 0.8)),
+            ),  # Dynamic sizing
+        )
 
-    # Better spacing for axis labels
-    plt.xlabel("Predicted Label", fontsize=10, labelpad=15)
-    plt.ylabel("True Label", fontsize=10, labelpad=15)
+        # Get the current axis
+        ax = fig.gca()
 
-    # Rotate x-axis labels if many classes to prevent overlap
-    if len(class_names) > 5:
-        plt.xticks(rotation=45, ha="right")
+        # Rotate labels if many classes
+        if len(class_names) > 8:
+            ax.tick_params(axis="x", rotation=90, labelsize=8)
+            ax.tick_params(axis="y", labelsize=8)
+        elif len(class_names) > 5:
+            ax.tick_params(axis="x", rotation=45, labelsize=9)
 
-    # Add note as a separate text box instead of in xlabel
-    fig.text(
-        0.5,
-        0.02,
-        "* See legend in log output",
-        ha="center",
-        fontsize=9,
-        style="italic",
-    )
+        # Add note at bottom
+        fig.text(
+            0.5,
+            0.02,
+            "* See classification report below",
+            ha="center",
+            fontsize=9,
+            style="italic",
+        )
 
-    # Adjust layout to prevent clipping
-    plt.tight_layout()
-    plt.subplots_adjust(bottom=0.15)  # Make room for the note
+        # Adjust layout once at the end
+        plt.tight_layout()
+        plt.subplots_adjust(bottom=0.12)
 
-    # Performance optimization: Save without showing first
-    save_path = os.path.join(save_dir, f"{png_prefix}.png")
-    fig.savefig(
-        save_path,
-        dpi=200,
-        bbox_inches="tight",
-        facecolor="white",
-        edgecolor="none",
-    )
+        # Save the figure
+        save_path = os.path.join(save_dir, f"{png_prefix}.png")
+        fig.savefig(
+            save_path,
+            dpi=150,
+            bbox_inches="tight",
+            facecolor="white",
+            edgecolor="none",
+        )
 
-    # Print classification report (this is fast, keep as-is)
-    target_names = class_names if class_names else None
+        print(f"Confusion matrix saved to: {save_path}")
+
+        # Show the plot in Jupyter
+        plt.show()
+
+    finally:
+        # Always restore interactive mode and clean up
+        if was_interactive:
+            plt.ion()
+
+        # Close the figure to free memory
+        plt.close(fig)
+
+    # Print classification report
     print("\nClassification Report:")
     print(
         classification_report(
-            df["actual"], df["predicted"], target_names=target_names
+            df["actual"], df["predicted"], target_names=class_names
         )
     )
 

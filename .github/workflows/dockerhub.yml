@@ -25,7 +25,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - 
+      -
         name: Lower github-runner storage
         run: |
           # Remove software and language runtimes we're not using

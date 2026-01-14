@@ -12,51 +12,64 @@ ENV C_INCLUDE_PATH="/usr/include/gdal"
 ENV GDAL_CONFIG=/usr/bin/gdal-config
 
 # System dependencies
+# System dependencies - split into manageable chunks
 RUN apt-get update && \
     apt-get -y install software-properties-common && \
     add-apt-repository ppa:ubuntugis/ubuntugis-unstable && \
-    curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
-    apt-get update && apt-get -y dist-upgrade && \
-    apt-get -y install build-essential \
+    apt-get update
+
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
+
+RUN apt-get update && \
+    apt-get -y install --no-install-recommends \
+        build-essential \
+        gcc \
+        g++ \
+        make \
+        wget \
+        curl \
+        git \
+        vim \
+        procps \
+        bzip2 && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && \
+    apt-get -y install --no-install-recommends \
         libsm6 \
         libxext6 \
         libxrender-dev \
         libfontconfig1 \
-        bzip2 \
-        diffutils \
-        file \
-        build-essential \
-        make \
+        libssl-dev \
+        libzmq3-dev \
+        libpng-dev \
+        libfreetype6-dev \
+        libx11-dev \
+        locales \
+        git-lfs && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && \
+    apt-get -y install --no-install-recommends \
         swig \
         libhdf5-dev \
         libhdf5-serial-dev \
         libhdf4-dev \
         libnetcdf-dev \
-        libacl1-dev \
+        libacl1-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && \
+    apt-get -y install --no-install-recommends \
+        gdal-bin \
+        libgdal-dev \
         libgeos++-dev \
         libgeos-dev \
         libsqlite3-dev \
-        libx11-dev \
         libproj-dev \
         proj-data \
         proj-bin \
-        libspatialindex-dev \
-        wget \
-        vim \
-        curl \
-        git \
-        procps \
-        gcc \
-        g++ \
-        bzip2 \
-        libssl-dev \
-        libzmq3-dev \
-        libpng-dev \
-        libfreetype6-dev \
-        locales \
-        git-lfs \
-        gdal-bin \
-        libgdal-dev && \
+        libspatialindex-dev && \
     apt-get -y autoremove && \
     rm -rf /var/cache/apt /var/lib/apt/lists/*
 

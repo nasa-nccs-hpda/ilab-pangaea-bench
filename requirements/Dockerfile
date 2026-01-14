@@ -127,10 +127,7 @@ RUN pip --no-cache-dir install \
     planetary-computer \
     joblib \
     psutil \
-    #terratorch \
-    geotessera \
-
-RUN pip install "numpy<2"
+    geotessera
 
 HEALTHCHECK NONE
 ENTRYPOINT []

@@ -51,7 +51,7 @@ RUN apt-get update && \
         libssl-dev \
         libzmq3-dev \
         libpng-dev \
-        libfreetype6-dev \ 
+        libfreetype6-dev \
         locales \
         git-lfs && \
     apt-get -y install gdal-bin libgdal-dev && \
@@ -118,8 +118,17 @@ RUN pip --no-cache-dir install \
     goes2go \
     gdown \
     wandb \
-    git+https://github.com/VMarsocci/pangaea-bench.git@main
+    git+https://github.com/VMarsocci/pangaea-bench.git@main \
+    "dask[distributed]" \
+    dask \
+    stackstac \
+    bokeh \
+    pystac-client \
+    planetary-computer \
+    joblib \
+    psutil \
     #terratorch \
+    geotessera \
 
 RUN pip install "numpy<2"
 
